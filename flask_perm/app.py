@@ -27,9 +27,13 @@ class Perm(object):
         """
         init_db(app.config.get('PERM_DB'))
 
-    def register_blueprint(self, app, *args, **kwargs):
+        app.config.setdefault('PERM_USER_GETTER', lambda id: None)
+        app.config.setdefault('PERM_USERS_GETTER', lambda: [])
+        app.config.setdefault('PERM_CURRENT_USER_GETTER', lambda: None)
+        app.config.setdefault('PERM_URL_PERFIX', '/perm')
+
         from .controllers import bp
-        app.register_blueprint(bp, *args, **kwargs)
+        app.register_blueprint(bp, url_prefix=app.config.get('PERM_URL_PREFIX'))
 
     def has_permission(self, user_id, code):
         from .services import VerificationService, PermissionService

@@ -33,9 +33,9 @@ def perm(app, db, request):
     g.user = {'id': 1, 'nickname': 'User1', 'is_allowed': True}
     app.config['PERM_CURRENT_USER_GETTER'] = lambda: g.user
     app.config['PERM_CURRENT_USER_ACCESS_VALIDATOR'] = lambda: g.user['is_allowed']
+    app.config['PERM_URL_PREFIX'] = '/perm'
     perm = Perm()
     perm.app = app
     perm.init_app(app)
-    perm.register_blueprint(app, url_prefix='/perm')
     db.create_all()
     return perm
