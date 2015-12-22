@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from ..core import get_db
+from ..core import db
 from .user_permission import (
     get_permissions_by_user,
     delete_by_user as delete_user_permissions_by_user,
 )
 from .user_group_permission import get_permissions_by_user_group
 from .user_group_member import get_user_groups_by_user
-
-db = get_db()
 
 def get_user_group_permissions_by_user(user_id):
     user_permission_ids = set()

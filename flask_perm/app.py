@@ -2,9 +2,7 @@
 
 from functools import wraps
 
-from flask import _app_ctx_stack as stack
-
-from .core import init_db
+from .core import db
 
 class Perm(object):
 
@@ -25,7 +23,8 @@ class Perm(object):
         * PERM_USERS_GETTER
         * PERM_CURRENT_USER_GETTER
         """
-        init_db(app.config.get('PERM_DB'))
+        db.app = app
+        db.init_app(app)
 
         app.config.setdefault('PERM_USER_GETTER', lambda id: None)
         app.config.setdefault('PERM_USERS_GETTER', lambda: [])

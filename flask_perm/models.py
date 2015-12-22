@@ -2,9 +2,7 @@
 
 from datetime import datetime
 
-from .core import get_db
-
-db = get_db()
+from .core import db
 
 class Permission(db.Model):
 

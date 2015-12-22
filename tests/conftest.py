@@ -4,6 +4,7 @@ from pytest import fixture
 from flask import Flask, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_perm import Perm
+from flask_perm.core import db
 
 @fixture
 def app(request):
@@ -17,15 +18,7 @@ def app(request):
     return flask_app
 
 @fixture
-def db(app, request):
-    perm_db = SQLAlchemy()
-    perm_db.app = app
-    perm_db.init_app(app)
-    return perm_db
-
-@fixture
-def perm(app, db, request):
-    app.config['PERM_DB'] = db
+def perm(app, request):
     app.config['PERM_USER_GETTER'] = lambda id: {'id': id, 'nickname': 'User%d' % id}
     app.config['PERM_USERS_GETTER'] = lambda: [
         app.config['PERM_USER_GETTER'](id) for id in range(20)

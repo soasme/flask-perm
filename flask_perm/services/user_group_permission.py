@@ -2,10 +2,8 @@
 
 from sqlalchemy.exc import IntegrityError
 
-from ..core import get_db
+from ..core import db
 from ..models import UserGroupPermission
-
-db = get_db()
 
 def create(user_group_id, permission_id):
     user_permission = UserGroupPermission(

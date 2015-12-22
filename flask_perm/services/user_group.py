@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from ..core import get_db
+from ..core import db
 from ..models import UserGroup
-
-db = get_db()
 
 def create(title):
     user_group = UserGroup(
