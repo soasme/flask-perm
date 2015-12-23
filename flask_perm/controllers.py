@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import Blueprint, request, jsonify, current_app
+from .core import db
 from .services import (
     UserGroupService, PermissionService, UserGroupMemberService,
     UserPermissionService, UserGroupPermissionService,
@@ -90,12 +91,21 @@ def update_permission(permission_id):
 
 @bp.route('/permissions/<int:permission_id>', methods=['DELETE'])
 def delete_permission(permission_id):
-    # TODO: delete user_permission, user_group_permission by permission
     permission = PermissionService.get(permission_id)
     if not permission:
         return not_found()
-    PermissionService.delete(permission_id)
-    return ok()
+    try:
+        db.session.begin_nested()
+        PermissionService.delete(permission_id)
+        db.session.begin_nested()
+        UserPermissionService.delete_by_permission(permission_id)
+        db.session.begin_nested()
+        UserGroupPermissionService.delete_by_permission(permission_id)
+        db.session.commit()
+        return ok()
+    except:
+        db.session.rollback()
+        raise
 
 @bp.route('/permissions/<int:permission_id>/users/<int:user_id>', methods=['PUT'])
 def add_user_permission(user_id, permission_id):
