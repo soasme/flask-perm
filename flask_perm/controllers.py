@@ -185,8 +185,16 @@ def delete_user_group(user_group_id):
     user_group = UserGroupService.get(user_group_id)
     if not user_group:
         return not_found()
-    UserGroupService.delete(user_group_id)
-    return ok()
+    try:
+        db.session.begin_nested()
+        UserGroupService.delete(user_group_id)
+        db.session.begin_nested()
+        UserGroupPermissionService.delete_by_user_group(user_group_id)
+        db.session.commit()
+        return ok()
+    except:
+        db.session.rollback()
+        raise
 
 @bp.route('/user_groups/<int:user_group_id>/users')
 def get_user_group_members(user_group_id):
