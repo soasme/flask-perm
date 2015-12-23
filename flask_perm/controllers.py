@@ -50,6 +50,16 @@ def get_permission(permission_id):
     permission = PermissionService.rest(permission)
     return ok(permission=permission)
 
+@bp.route('/permissions/<int:permission_id>/users')
+def get_permission_users(permission_id):
+    permission = PermissionService.get(permission_id)
+    if not permission:
+        return not_found()
+    user_ids = set(UserPermissionService.get_users_by_permission(permission_id))
+    users = current_app.config['PERM_USERS_GETTER']()
+    users = [user for user in users if user['id'] in user_ids]
+    return ok(users=users)
+
 @bp.route('/permissions/<int:permission_id>', methods=['PATCH'])
 def update_permission(permission_id):
     permission = PermissionService.get(permission_id)
