@@ -38,6 +38,14 @@ def delete_by_permission(permission_id):
         db.session.delete(user_group_permission)
     db.session.commit()
 
+def delete_by_user_group(user_group_id):
+    user_group_permissions = UserGroupPermission.query.filter_by(
+        user_group_id=user_group_id,
+    ).all()
+    for user_group_permission in user_group_permissions:
+        db.session.delete(user_group_permission)
+    db.session.commit()
+
 def get_user_groups_by_permission(permission_id):
     rows = UserGroupPermission.query.filter_by(
         permission_id=permission_id
