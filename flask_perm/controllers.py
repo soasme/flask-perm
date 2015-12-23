@@ -94,18 +94,10 @@ def delete_permission(permission_id):
     permission = PermissionService.get(permission_id)
     if not permission:
         return not_found()
-    try:
-        db.session.begin_nested()
-        PermissionService.delete(permission_id)
-        db.session.begin_nested()
-        UserPermissionService.delete_by_permission(permission_id)
-        db.session.begin_nested()
-        UserGroupPermissionService.delete_by_permission(permission_id)
-        db.session.commit()
-        return ok()
-    except:
-        db.session.rollback()
-        raise
+    UserPermissionService.delete_by_permission(permission_id)
+    UserGroupPermissionService.delete_by_permission(permission_id)
+    PermissionService.delete(permission_id)
+    return ok()
 
 @bp.route('/permissions/<int:permission_id>/users/<int:user_id>', methods=['PUT'])
 def add_user_permission(user_id, permission_id):
@@ -185,16 +177,9 @@ def delete_user_group(user_group_id):
     user_group = UserGroupService.get(user_group_id)
     if not user_group:
         return not_found()
-    try:
-        db.session.begin_nested()
-        UserGroupService.delete(user_group_id)
-        db.session.begin_nested()
-        UserGroupPermissionService.delete_by_user_group(user_group_id)
-        db.session.commit()
-        return ok()
-    except:
-        db.session.rollback()
-        raise
+    UserGroupPermissionService.delete_by_user_group(user_group_id)
+    UserGroupService.delete(user_group_id)
+    return ok()
 
 @bp.route('/user_groups/<int:user_group_id>/users')
 def get_user_group_members(user_group_id):
