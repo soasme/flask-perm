@@ -60,6 +60,22 @@ def get_permission_users(permission_id):
     users = [user for user in users if user['id'] in user_ids]
     return ok(users=users)
 
+@bp.route('/permissions/<int:permission_id>/user_groups')
+def get_permission_user_groups(permission_id):
+    permission = PermissionService.get(permission_id)
+    if not permission:
+        return not_found()
+    user_group_ids = set(
+        UserGroupPermissionService.get_user_groups_by_permission(permission_id)
+    )
+    user_groups = [
+        UserGroupService.get(user_group_id)
+        for user_group_id in user_group_ids
+    ]
+
+    user_groups = map(UserGroupService.rest, user_groups)
+    return ok(user_groups=user_groups)
+
 @bp.route('/permissions/<int:permission_id>', methods=['PATCH'])
 def update_permission(permission_id):
     permission = PermissionService.get(permission_id)
