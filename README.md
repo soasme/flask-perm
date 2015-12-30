@@ -8,6 +8,10 @@ perm = Perm()
 perm.app = app
 perm.init_app(app)
 
+perm.user_loader(User.query.get)
+perm.users_loader(User.query.all)
+perm.current_user_loader(lambda: g.user)
+
 print perm.has_permission(user_id, 'product.add') # True
 
 print perm.get_user_permissions(user_id) # ['product.add', 'product.update']
