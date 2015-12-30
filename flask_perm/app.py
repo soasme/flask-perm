@@ -29,6 +29,7 @@ class Perm(object):
 
         app.config.setdefault('PERM_USERS_GETTER', lambda: [])
         app.config.setdefault('PERM_URL_PERFIX', '/perm')
+        app.config.setdefault('PERM_CURRENT_USER_ACCESS_VALIDATOR', lambda user: False)
 
         from . import models
         db.create_all()

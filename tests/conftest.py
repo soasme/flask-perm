@@ -33,7 +33,7 @@ def perm(app, request):
     def users_loader():
         return [user_loader(id) for id in range(20)]
 
-    app.config['PERM_CURRENT_USER_ACCESS_VALIDATOR'] = lambda: True
+    app.config['PERM_CURRENT_USER_ACCESS_VALIDATOR'] = lambda user: True
     app.config['PERM_URL_PREFIX'] = '/perm'
 
     perm = Perm()

@@ -21,7 +21,7 @@ def not_found(message='not found', **data):
 
 @bp.before_request
 def before_request():
-    if not current_app.config['PERM_CURRENT_USER_ACCESS_VALIDATOR']():
+    if not current_app.config['PERM_CURRENT_USER_ACCESS_VALIDATOR'](bp.perm.load_current_user()):
         return jsonify(code=1, message='forbidden', data={}), 403
 
 @bp.route('/permissions', methods=['POST'])
