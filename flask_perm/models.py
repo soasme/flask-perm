@@ -22,6 +22,7 @@ class UserGroup(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(64), default='', nullable=False)
+    code = db.Column(db.String(64))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 class UserGroupMember(db.Model):

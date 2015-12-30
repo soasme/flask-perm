@@ -3,9 +3,10 @@
 from ..core import db
 from ..models import UserGroup
 
-def create(title):
+def create(title, code=None):
     user_group = UserGroup(
-        title=title
+        title=title,
+        code=code,
     )
     db.session.add(user_group)
     db.session.commit()

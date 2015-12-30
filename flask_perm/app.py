@@ -11,6 +11,9 @@ class Perm(object):
 
     def __init__(self, app=None):
         self.app = app
+        self.user_callback = None
+        self.current_user_callback = None
+        self.users_callback = None
         if app is not None:
             self.init_app(app)
 
@@ -19,24 +22,47 @@ class Perm(object):
         Configuration Items:
 
         * PERM_DB
-        * PERM_USER_GETTER
         * PERM_USERS_GETTER
-        * PERM_CURRENT_USER_GETTER
         """
         db.app = app
         db.init_app(app)
 
-        app.config.setdefault('PERM_USER_GETTER', lambda id: None)
         app.config.setdefault('PERM_USERS_GETTER', lambda: [])
-        app.config.setdefault('PERM_CURRENT_USER_GETTER', lambda: None)
         app.config.setdefault('PERM_URL_PERFIX', '/perm')
 
         from . import models
         db.create_all()
 
         from .controllers import bp
+        bp.perm = self
         app.register_blueprint(bp, url_prefix=app.config.get('PERM_URL_PREFIX'))
 
+    def user_loader(self, callback):
+        self.user_callback = callback
+        return callback
+
+    def current_user_loader(self, callback):
+        self.current_user_callback = callback
+        return callback
+
+    def users_loader(self, callback):
+        self.users_callback = callback
+        return callback
+
+    def load_user(self, user_id):
+        if self.user_callback is None:
+            raise NotImplementedError('You must register user_loader!')
+        return self.user_callback(user_id)
+
+    def load_current_user(self):
+        if self.current_user_callback is None:
+            raise NotImplementedError('You must register current_user_loader!')
+        return self.current_user_callback()
+
+    def load_users(self):
+        if self.users_callback is None:
+            raise NotImplementedError('You must register users_loader!')
+        return self.users_callback()
 
     def has_permission(self, user_id, code):
         from .services import VerificationService, PermissionService
@@ -53,16 +79,36 @@ class Perm(object):
         permissions = map(PermissionService.rest, permissions)
         return permissions
 
+    def get_all_permission_codes(self):
+        from .services import PermissionService
+        permissions = PermissionService.get_permissions()
+        return [permission.code for permission in permissions]
+
     def require_permission(self, *codes):
+        if self.current_user_callback is None:
+            raise NotImplementedError('You must register current_user_loader!')
+
         def deco(func):
             @wraps(func)
             def _(*args, **kwargs):
-                current_user = self.app.config['PERM_CURRENT_USER_GETTER']()
-                current_user_id = current_user['id']
+
+                current_user = self.current_user_callback()
+                current_user_id = current_user.id
+
                 if not codes:
+                    is_allowed = True
+                if '*' in codes:
+                    is_allowed = any(
+                        self.has_permission(current_user_id, code)
+                        for code in self.get_all_permission_codes()
+                    )
+                else:
+                    is_allowed = any(self.has_permission(current_user_id, code) for code in codes)
+
+                if is_allowed:
                     return func(*args, **kwargs)
-                if any(self.has_permission(current_user_id, code) for code in codes):
-                    return func(*args, **kwargs)
-                raise self.__class__.Denied
+                else:
+                    raise self.__class__.Denied
+
             return _
         return deco

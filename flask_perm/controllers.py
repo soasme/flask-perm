@@ -187,7 +187,8 @@ def get_user_group_members(user_group_id):
     if not user_group:
         return not_found()
     user_ids = UserGroupMemberService.get_users_by_group(user_group_id)
-    users = map(current_app.config['PERM_USER_GETTER'], user_ids)
+    users = map(bp.perm.load_user, user_ids)
+    users = map(jsonify_user, users)
     return ok(users=users)
 
 @bp.route('/user_groups/<int:user_group_id>/users/<int:user_id>', methods=['PUT'])
@@ -206,14 +207,16 @@ def delete_user_from_user_group(user_id, user_group_id):
     UserGroupMemberService.delete(user_id, user_group_id)
     return ok()
 
+def jsonify_user(user):
+    return dict(id=user.id, nickname=user.nickname)
+
 @bp.route('/users')
 def get_users():
-    users = current_app.config['PERM_USERS_GETTER']()
-    return ok(users=users)
+    return ok(users=map(jsonify_user, bp.perm.load_users()))
 
 @bp.route('/users/<int:user_id>')
 def get_user(user_id):
-    user = current_app.config['PERM_USER_GETTER'](user_id)
+    user = bp.perm.load_user(user_id)
     if not user:
         return not_found()
-    return ok(user=user)
+    return ok(user=jsonify_user(user))
