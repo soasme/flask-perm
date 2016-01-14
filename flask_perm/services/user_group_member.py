@@ -20,6 +20,9 @@ def create(user_id, user_group_id):
         ).first()
     return member
 
+def get(id):
+    return UserGroupMember.query.get(id)
+
 def delete(id):
     member = UserGroupMember.query.get(id)
     if member:
