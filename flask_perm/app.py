@@ -15,6 +15,7 @@ class Perm(object):
         self.current_user_callback = None
         self.users_callback = None
         self.users_count_callback = None
+        self.admin_logger = logging.getLogger('flask_perm.admin')
         if app is not None:
             self.init_app(app)
 
@@ -31,6 +32,9 @@ class Perm(object):
         app.config.setdefault('PERM_USERS_GETTER', lambda: [])
         app.config.setdefault('PERM_URL_PERFIX', '/perm')
         app.config.setdefault('PERM_CURRENT_USER_ACCESS_VALIDATOR', lambda user: False)
+        if app.config.get('PERM_ADMIN_ECHO'):
+            self.admin_logger.setLevel(logging.INFO)
+            self.admin_logger.addHandler(logging.StreamHandler())
 
         from . import models
         db.create_all()
@@ -38,6 +42,10 @@ class Perm(object):
         from .controllers import bp
         bp.perm = self
         app.register_blueprint(bp, url_prefix=app.config.get('PERM_URL_PREFIX'))
+    def log_admin_action(self, msg):
+        if self.app.config.get('PERM_ADMIN_ECHO'):
+            self.admin_logger.info(msg)
+
     def require_perm_admin(self, f):
         @wraps(f)
         def _(*args, **kwargs):
