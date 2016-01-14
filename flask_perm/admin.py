@@ -9,7 +9,11 @@ bp = Blueprint('perm-admin', __name__, template_folder='templates', static_folde
 def index():
     if not bp.perm.has_perm_admin_logined():
         return redirect(url_for('perm-admin.login'))
+
     render_data = {
+        'base_api_url': current_app.config.get('PERM_ADMIN_API_PREFIX'),
+        'base_web_url': current_app.config.get('PERM_ADMIN_PREFIX'),
+        'debug': current_app.config.get('DEBUG'),
     }
 
     return render_template('/perm-admin/index.html', **render_data)

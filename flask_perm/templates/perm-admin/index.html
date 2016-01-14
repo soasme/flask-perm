@@ -7,6 +7,13 @@
   </head>
   <body ng-app="PermAdmin">
     <div ui-view></div>
+    <script>
+     window.g = {
+       baseApiUrl: '{{ base_api_url }}/',
+       baseWebUrl: '{{ base_web_url }}',
+       debug: {{ debug | tojson }},
+     }
+    </script>
     <script src="{{ url_for('perm-admin.static', filename='ng-admin.min.js')}}"></script>
     <script src="{{ url_for('perm-admin.static', filename='admin.js')}}"></script>
   </body>
