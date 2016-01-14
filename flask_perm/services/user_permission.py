@@ -21,11 +21,8 @@ def create(user_id, permission_id):
         ).first()
     return user_permission
 
-def delete(user_id, permission_id):
-    user_permission = UserPermission.query.filter_by(
-        user_id=user_id,
-        permission_id=permission_id
-    ).first()
+def delete(user_permission_id):
+    user_permission = UserPermission.query.get(user_permission_id)
     if user_permission:
         db.session.delete(user_permission)
     db.session.commit()
@@ -61,3 +58,18 @@ def get_permissions_by_user(user_id):
         UserPermission.permission_id
     ).all()
     return [row.permission_id for row in rows]
+
+def filter_user_permissions(filter_by, offset, limit, sort_field='created_at', sort_dir='desc'):
+    query = UserPermission.query
+    if filter_by:
+        query = query.filter_by(**filter_by)
+    field = getattr(UserPermission, sort_field)
+    order_by = getattr(field, sort_dir.lower())()
+    return query.order_by(order_by).offset(offset).limit(limit).all()
+
+def rest(user_permission):
+    return dict(
+        id=user_permission.id,
+        user_id=user_permission.user_id,
+        permission_id=user_permission.permission_id,
+    )
