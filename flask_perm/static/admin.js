@@ -15,6 +15,23 @@ PermAdmin.config(['NgAdminConfigurationProvider', function (nga) {
   var userPermission = nga.entity('user_permissions');
   var userGroupMember = nga.entity('user_group_members');
   var userGroupPermission = nga.entity('user_group_permissions');
+  var fields = {
+    title: nga.field('title').label('Title'),
+    code: nga.field('code').label('Code'),
+    nickname: nga.field('nickname').label('Nickname'),
+    user: nga.field('user_id', 'reference')
+      .targetEntity(user)
+      .targetField(nga.field('nickname'))
+      .label('User'),
+    userGroup: nga.field('user_group_id', 'reference')
+      .targetEntity(userGroup)
+      .targetField(nga.field('title'))
+      .label('User Group'),
+    permission: nga.field('permission_id', 'reference')
+      .targetEntity(permission)
+      .targetField(nga.field('title'))
+      .label('Permission')
+  };
 
   admin.addEntity(permission);
   admin.addEntity(userGroup);
