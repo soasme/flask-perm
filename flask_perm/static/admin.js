@@ -139,5 +139,17 @@ PermAdmin.config(['NgAdminConfigurationProvider', function (nga) {
       .addChild(nga.menu(userGroupMember).icon(menuIcons.userGroupMember))
   );
 
+  var customHeaderTemplate = '<div class="navbar-header">' +
+      '<a class="navbar-brand" href="#" ng-click="appController.displayHome()">' +
+      applicationName +
+      '</a>' +
+      '</div>' +
+      '<p class="navbar-text navbar-right">' +
+      '<a href="' + window.g.baseWebUrl + '/logout">' +
+      'Logout' +
+      '</a>' +
+      '</p>';
+  admin.header(customHeaderTemplate);
+
   nga.configure(admin);
 }]);
