@@ -113,10 +113,17 @@ class Perm(object):
             raise NotImplementedError('You must register current_user_loader!')
         return self.current_user_callback()
 
-    def load_users(self):
+    def load_users(self, filter_by={}, sort_field='created_at', sort_dir='desc', offset=0, limit=20):
         if self.users_callback is None:
             raise NotImplementedError('You must register users_loader!')
-        return self.users_callback()
+        return self.users_callback(**dict(
+            filter_by=filter_by,
+            sort_field=sort_field,
+            sort_dir=sort_dir,
+            offset=offset,
+            limit=limit,
+        ))
+
     def load_users_count(self):
         if self.users_count_callback is None:
             raise NotImplementedError('You must register users_count_loader')
