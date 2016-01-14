@@ -6,6 +6,7 @@ PermAdmin.config(['NgAdminConfigurationProvider', function (nga) {
   var applicationName = 'Permission Management Admininistration';
   var admin = nga.application(
     applicationName,
+    window.g.debug
   ).baseApiUrl(window.g.baseApiUrl);
   // more configuration here later
   nga.configure(admin);
