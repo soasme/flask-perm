@@ -30,11 +30,12 @@ def perm(app, request):
     def current_user_loader():
         return user_loader(1)
 
-    def users_loader():
+    def users_loader(**kwargs):
         return [user_loader(id) for id in range(20)]
 
-    app.config['PERM_CURRENT_USER_ACCESS_VALIDATOR'] = lambda user: True
     app.config['PERM_URL_PREFIX'] = '/perm'
+    app.config['PERM_ADMIN_USERNAME'] = 'admin'
+    app.config['PERM_ADMIN_PASSWORD'] = 'test'
 
     perm = Perm()
     perm.app = app
