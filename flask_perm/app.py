@@ -19,6 +19,7 @@ class Perm(object):
         self.users_callback = None
         self.users_count_callback = None
         self.admin_logger = logging.getLogger('flask_perm.admin')
+        self.registered_permissions = set()
         if app is not None:
             self.init_app(app)
 
@@ -189,6 +190,9 @@ class Perm(object):
     def require_permission(self, *codes):
         if self.current_user_callback is None:
             raise NotImplementedError('You must register current_user_loader!')
+
+        for code in codes:
+            self.registered_permissions.add(code)
 
         def deco(func):
             @wraps(func)
