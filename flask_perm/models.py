@@ -16,6 +16,9 @@ class Permission(db.Model):
     code = db.Column(db.String(64))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
+    def __str__(self):
+        return '<Permission id={.id} title={.title} code={.code}>'.format(self)
+
 class UserGroup(db.Model):
 
     __tablename__ = 'user_group'
@@ -24,6 +27,9 @@ class UserGroup(db.Model):
     title = db.Column(db.String(64), default='', nullable=False)
     code = db.Column(db.String(64))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def __str__(self):
+        return '<UserGroup id={.id} title={.title} code={.code}>'.format(self)
 
 class UserGroupMember(db.Model):
 
@@ -38,6 +44,9 @@ class UserGroupMember(db.Model):
     user_group_id = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
+    def __str__(self):
+        return '<UserGroupMember id={.id} user_id={.user_id} user_group_id={.user_group_id}>'.format(self)
+
 class UserPermission(db.Model):
 
     __tablename__ = 'user_permission'
@@ -50,6 +59,9 @@ class UserPermission(db.Model):
     permission_id = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
+    def __str__(self):
+        return '<UserPermission id={.id} user_id={.user_id} permission_id={.permission_id}>'.format(self)
+
 class UserGroupPermission(db.Model):
 
     __tablename__ = 'user_group_permission'
@@ -61,3 +73,6 @@ class UserGroupPermission(db.Model):
     user_group_id = db.Column(db.Integer, nullable=False)
     permission_id = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def __str__(self):
+        return '<UserGroupPermission id={.id} user_id={.user_id} permission_id={.permission_id}>'.format(self)
