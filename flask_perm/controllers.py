@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import json
 from flask import Blueprint, request, jsonify, current_app
 from .core import db
 from .services import (
@@ -10,7 +11,7 @@ from .services import (
 
 bp = Blueprint('flask_perm_api', __name__)
 
-def ok(**data):
+def ok(data=None):
     return jsonify(code=0, message='success', data=data)
 
 def bad_request(message='bad request', **data):
@@ -19,10 +20,18 @@ def bad_request(message='bad request', **data):
 def not_found(message='not found', **data):
     return jsonify(code=1, message=message, data=data), 404
 
+def forbidden(message='forbidden', **data):
+    return jsonify(code=1, message=message, data=data), 403
+
+def check_auth(username, password):
+    return current_app.config['PERM_ADMIN_USERNAME'] == username and \
+        current_app.config['PERM_ADMIN_PASSWORD'] == password
+
 @bp.before_request
 def before_request():
-    if not current_app.config['PERM_CURRENT_USER_ACCESS_VALIDATOR'](bp.perm.load_current_user()):
-        return jsonify(code=1, message='forbidden', data={}), 403
+    if not bp.perm.has_perm_admin_logined():
+        return forbidden()
+
 
 @bp.route('/permissions', methods=['POST'])
 def add_permission():
@@ -35,13 +44,28 @@ def add_permission():
     code = data.get('code')
     permission = PermissionService.create(title, code)
     permission = PermissionService.rest(permission)
-    return ok(permission=permission)
+    return ok(permission)
+
+def _get_filter_by():
+    filter_by = request.args.get('_filters')
+    if filter_by:
+        try:
+            filter_by = json.loads(filter_by)
+        except ValueError:
+            pass
+    return filter_by
 
 @bp.route('/permissions')
 def get_permissions():
-    permissions = PermissionService.get_permissions()
+    offset = request.args.get('offset', type=int, default=0)
+    limit = request.args.get('limit', type=int, default=20)
+    sort_field = request.args.get('_sortField', 'created_at').lower()
+    sort_dir = request.args.get('_sortDir', 'DESC').lower()
+    filter_by = _get_filter_by()
+    permissions = PermissionService.filter_permissions(
+        filter_by, offset, limit, sort_field, sort_dir)
     permissions = map(PermissionService.rest, permissions)
-    return ok(permissions=permissions)
+    return ok(permissions)
 
 @bp.route('/permissions/<int:permission_id>')
 def get_permission(permission_id):
@@ -49,35 +73,9 @@ def get_permission(permission_id):
     if not permission:
         return not_found()
     permission = PermissionService.rest(permission)
-    return ok(permission=permission)
+    return ok(permission)
 
-@bp.route('/permissions/<int:permission_id>/users')
-def get_permission_users(permission_id):
-    permission = PermissionService.get(permission_id)
-    if not permission:
-        return not_found()
-    user_ids = set(UserPermissionService.get_users_by_permission(permission_id))
-    users = current_app.config['PERM_USERS_GETTER']()
-    users = [user for user in users if user['id'] in user_ids]
-    return ok(users=users)
-
-@bp.route('/permissions/<int:permission_id>/user_groups')
-def get_permission_user_groups(permission_id):
-    permission = PermissionService.get(permission_id)
-    if not permission:
-        return not_found()
-    user_group_ids = set(
-        UserGroupPermissionService.get_user_groups_by_permission(permission_id)
-    )
-    user_groups = [
-        UserGroupService.get(user_group_id)
-        for user_group_id in user_group_ids
-    ]
-
-    user_groups = map(UserGroupService.rest, user_groups)
-    return ok(user_groups=user_groups)
-
-@bp.route('/permissions/<int:permission_id>', methods=['PATCH'])
+@bp.route('/permissions/<int:permission_id>', methods=['PUT'])
 def update_permission(permission_id):
     permission = PermissionService.get(permission_id)
     if not permission:
@@ -87,7 +85,7 @@ def update_permission(permission_id):
     if request.get_json().get('code'):
         PermissionService.set_code(permission_id, request.get_json().get('code'))
     permission = PermissionService.rest(PermissionService.get(permission_id))
-    return ok(permission=permission)
+    return ok(permission)
 
 @bp.route('/permissions/<int:permission_id>', methods=['DELETE'])
 def delete_permission(permission_id):
@@ -99,50 +97,70 @@ def delete_permission(permission_id):
     PermissionService.delete(permission_id)
     return ok()
 
-@bp.route('/permissions/<int:permission_id>/users/<int:user_id>', methods=['PUT'])
-def add_user_permission(user_id, permission_id):
+@bp.route('/user_permissions')
+def get_user_permissions():
+    offset = request.args.get('offset', type=int, default=0)
+    limit = request.args.get('limit', type=int, default=20)
+    sort_field = request.args.get('_sortField', 'created_at').lower()
+    sort_dir = request.args.get('_sortDir', 'DESC').lower()
+    filter_by = _get_filter_by()
+    user_permissions = UserPermissionService.filter_user_permissions(
+        filter_by, offset, limit, sort_field, sort_dir)
+    user_permissions = map(UserPermissionService.rest, user_permissions)
+    return ok(user_permissions)
+
+@bp.route('/user_permissions', methods=['POST'])
+def add_user_permission():
+    data = request.get_json()
+    try:
+        permission_id = data['permission_id']
+        user_id = data['user_id']
+    except KeyError:
+        return bad_request()
+
     permission = PermissionService.get(permission_id)
     if not permission:
         return not_found()
-    UserPermissionService.create(user_id, permission_id)
+    user_permission = UserPermissionService.create(user_id, permission_id)
+    user_permission = UserPermissionService.rest(user_permission)
+    return ok(user_permission)
+
+@bp.route('/user_permissions/<int:user_permission_id>', methods=['DELETE'])
+def revoke_user_permission(user_permission_id):
+    UserPermissionService.delete(user_permission_id)
     return ok()
 
-@bp.route('/permissions/<int:permission_id>/users/<int:user_id>', methods=['DELETE'])
-def revoke_user_permission(user_id, permission_id):
+@bp.route('/user_group_permissions')
+def get_user_group_permissions():
+    offset = request.args.get('offset', type=int, default=0)
+    limit = request.args.get('limit', type=int, default=20)
+    sort_field = request.args.get('_sortField', 'created_at').lower()
+    sort_dir = request.args.get('_sortDir', 'DESC').lower()
+    filter_by = _get_filter_by()
+    user_group_permissions = UserGroupPermissionService.filter_user_group_permissions(
+        filter_by, offset, limit, sort_field, sort_dir)
+    user_group_permissions = map(UserGroupPermissionService.rest, user_group_permissions)
+    return ok(user_group_permissions)
+
+@bp.route('/user_group_permissions', methods=['POST'])
+def add_user_group_permission():
+    data = request.get_json()
+    try:
+        permission_id = data['permission_id']
+        user_group_id = data['user_group_id']
+    except KeyError:
+        return bad_request()
     permission = PermissionService.get(permission_id)
     if not permission:
         return not_found()
-    UserPermissionService.delete(user_id, permission_id)
-    return ok()
+    user_group_permission = UserGroupPermissionService.create(user_group_id, permission_id)
+    user_group_permission = UserGroupPermissionService.rest(user_group_permission)
+    return ok(user_group_permission)
 
-@bp.route('/permissions/<int:permission_id>/user_groups/<int:user_group_id>', methods=['PUT'])
-def add_user_group_permission(user_group_id, permission_id):
-    permission = PermissionService.get(permission_id)
-    if not permission:
-        return not_found()
-    UserGroupPermissionService.create(user_group_id, permission_id)
+@bp.route('/user_group_permissions/<int:user_group_permission_id>', methods=['DELETE'])
+def revoke_user_group_permission(user_group_permission_id):
+    UserGroupPermissionService.delete(user_group_permission_id)
     return ok()
-
-@bp.route('/permissions/<int:permission_id>/user_groups/<int:user_group_id>', methods=['DELETE'])
-def revoke_user_group_permission(user_group_id, permission_id):
-    permission = PermissionService.get(permission_id)
-    if not permission:
-        return not_found()
-    UserGroupPermissionService.delete(user_group_id, permission_id)
-    return ok()
-
-@bp.route('/users/<int:user_id>/permissions')
-def get_user_permissions(user_id):
-    only = request.args.get('only')
-    if only == 'user':
-        permission_ids = set(UserPermissionService.get_permissions_by_user(user_id))
-    elif only == 'user_group':
-        permission_ids = VerificationService.get_user_group_permissions_by_user(user_id)
-    else:
-        permission_ids = VerificationService.get_user_permissions(user_id)
-    permissions = map(PermissionService.get, permission_ids)
-    permissions = map(PermissionService.rest, permissions)
-    return ok(permissions=permissions)
 
 @bp.route('/user_groups', methods=['POST'])
 def add_user_group():
@@ -153,15 +171,29 @@ def add_user_group():
         return bad_request('title is blank')
     user_group = UserGroupService.create(data['title'])
     user_group = UserGroupService.rest(user_group)
-    return ok(user_group=user_group)
+    return ok(user_group)
 
 @bp.route('/user_groups')
 def get_user_groups():
-    user_groups = UserGroupService.get_user_groups()
+    offset = request.args.get('offset', type=int, default=0)
+    limit = request.args.get('limit', type=int, default=20)
+    sort_field = request.args.get('_sortField', 'created_at').lower()
+    sort_dir = request.args.get('_sortDir', 'DESC').lower()
+    filter_by = _get_filter_by()
+    user_groups = UserGroupService.filter_user_groups(
+        filter_by, offset, limit, sort_field, sort_dir)
     user_groups = map(UserGroupService.rest, user_groups)
-    return ok(user_groups=user_groups)
+    return ok(user_groups)
 
-@bp.route('/user_groups/<int:user_group_id>', methods=['PATCH'])
+@bp.route('/user_groups/<int:user_group_id>')
+def get_user_group(user_group_id):
+    user_group = UserGroupService.get(user_group_id)
+    if not user_group:
+        return not_found()
+    user_group = UserGroupService.rest(user_group)
+    return ok(user_group)
+
+@bp.route('/user_groups/<int:user_group_id>', methods=['PUT'])
 def update_user_group(user_group_id):
     user_group = UserGroupService.get(user_group_id)
     if not user_group:
@@ -169,8 +201,10 @@ def update_user_group(user_group_id):
     data = request.get_json()
     if 'title' in data and data['title']:
         UserGroupService.rename(user_group_id, data['title'])
+    if 'code' in data and data['code']:
+        UserGroupService.update_code(user_group_id, data['code'])
     user_group = UserGroupService.rest(UserGroupService.get(user_group_id))
-    return ok(user_group=user_group)
+    return ok(user_group)
 
 @bp.route('/user_groups/<int:user_group_id>', methods=['DELETE'])
 def delete_user_group(user_group_id):
@@ -181,30 +215,35 @@ def delete_user_group(user_group_id):
     UserGroupService.delete(user_group_id)
     return ok()
 
-@bp.route('/user_groups/<int:user_group_id>/users')
-def get_user_group_members(user_group_id):
-    user_group = UserGroupService.get(user_group_id)
-    if not user_group:
-        return not_found()
-    user_ids = UserGroupMemberService.get_users_by_group(user_group_id)
-    users = map(bp.perm.load_user, user_ids)
-    users = map(jsonify_user, users)
-    return ok(users=users)
+@bp.route('/user_group_members')
+def get_user_group_members():
+    offset = request.args.get('offset', type=int, default=0)
+    limit = request.args.get('limit', type=int, default=20)
+    sort_field = request.args.get('_sortField', 'created_at').lower()
+    sort_dir = request.args.get('_sortDir', 'DESC').lower()
+    filter_by = _get_filter_by()
+    members = UserGroupMemberService.filter_user_group_members(filter_by, offset, limit, sort_field, sort_dir)
+    members = map(UserGroupMemberService.rest, members)
+    return ok(members)
 
-@bp.route('/user_groups/<int:user_group_id>/users/<int:user_id>', methods=['PUT'])
-def add_user_to_user_group(user_id, user_group_id):
+@bp.route('/user_group_members', methods=['POST'])
+def add_user_group_member():
+    data = request.get_json()
+    try:
+        user_id = data['user_id']
+        user_group_id = data['user_group_id']
+    except KeyError:
+        return bad_request()
     user_group = UserGroupService.get(user_group_id)
     if not user_group:
         return not_found()
-    UserGroupMemberService.create(user_id, user_group_id)
-    return ok()
+    member = UserGroupMemberService.create(user_id, user_group_id)
+    member = UserGroupMemberService.rest(member)
+    return ok(member)
 
-@bp.route('/user_groups/<int:user_group_id>/users/<int:user_id>', methods=['DELETE'])
-def delete_user_from_user_group(user_id, user_group_id):
-    user_group = UserGroupService.get(user_group_id)
-    if not user_group:
-        return not_found()
-    UserGroupMemberService.delete(user_id, user_group_id)
+@bp.route('/user_group_members/<int:user_group_member_id>', methods=['DELETE'])
+def delete_user_from_user_group(user_group_member_id):
+    UserGroupMemberService.delete(user_group_member_id)
     return ok()
 
 def jsonify_user(user):
@@ -212,11 +251,18 @@ def jsonify_user(user):
 
 @bp.route('/users')
 def get_users():
-    return ok(users=map(jsonify_user, bp.perm.load_users()))
+    offset = request.args.get('offset', type=int, default=0)
+    limit = request.args.get('limit', type=int, default=20)
+    sort_field = request.args.get('_sortField', 'created_at').lower()
+    sort_dir = request.args.get('_sortDir', 'DESC').lower()
+    filter_by = _get_filter_by()
+    users = bp.perm.load_users(filter_by, sort_field, sort_dir, offset, limit)
+    users = map(jsonify_user, users)
+    return ok(users)
 
 @bp.route('/users/<int:user_id>')
 def get_user(user_id):
     user = bp.perm.load_user(user_id)
     if not user:
         return not_found()
-    return ok(user=jsonify_user(user))
+    return ok(jsonify_user(user))
