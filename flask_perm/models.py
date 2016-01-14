@@ -6,7 +6,7 @@ from .core import db
 
 class Permission(db.Model):
 
-    __tablename__ = 'permission'
+    __tablename__ = 'perm_permission'
     __table_args__ = (
         db.UniqueConstraint('code', name='ux_permission_code'),
     )
@@ -21,7 +21,7 @@ class Permission(db.Model):
 
 class UserGroup(db.Model):
 
-    __tablename__ = 'user_group'
+    __tablename__ = 'perm_user_group'
     __table_args__ = (
         db.UniqueConstraint('code', name='ux_user_group_code'),
     )
@@ -36,7 +36,7 @@ class UserGroup(db.Model):
 
 class UserGroupMember(db.Model):
 
-    __tablename__ = 'user_group_member'
+    __tablename__ = 'perm_user_group_member'
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'user_group_id', name='ux_user_in_user_group'),
@@ -52,7 +52,7 @@ class UserGroupMember(db.Model):
 
 class UserPermission(db.Model):
 
-    __tablename__ = 'user_permission'
+    __tablename__ = 'perm_user_permission'
     __table_args__ = (
         db.UniqueConstraint('user_id', 'permission_id', name='ux_user_permission'),
     )
@@ -67,7 +67,7 @@ class UserPermission(db.Model):
 
 class UserGroupPermission(db.Model):
 
-    __tablename__ = 'user_group_permission'
+    __tablename__ = 'perm_user_group_permission'
     __table_args__ = (
         db.UniqueConstraint('user_group_id', 'permission_id', name='ux_user_permission'),
     )
