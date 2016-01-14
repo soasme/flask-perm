@@ -22,6 +22,9 @@ class Permission(db.Model):
 class UserGroup(db.Model):
 
     __tablename__ = 'user_group'
+    __table_args__ = (
+        db.UniqueConstraint('code', name='ux_user_group_code'),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(64), default='', nullable=False)
