@@ -15,5 +15,12 @@ PermAdmin.config(['NgAdminConfigurationProvider', function (nga) {
   var userPermission = nga.entity('user_permissions');
   var userGroupMember = nga.entity('user_group_members');
   var userGroupPermission = nga.entity('user_group_permissions');
+
+  admin.addEntity(permission);
+  admin.addEntity(userGroup);
+  admin.addEntity(user);
+  admin.addEntity(userPermission);
+  admin.addEntity(userGroupPermission);
+  admin.addEntity(userGroupMember);
   nga.configure(admin);
 }]);
