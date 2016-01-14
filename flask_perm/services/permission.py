@@ -45,6 +45,14 @@ def get(id):
 def get_permissions():
     return Permission.query.all()
 
+def filter_permissions(filter_by, offset, limit, sort_field='created_at', sort_dir='desc'):
+    query = Permission.query
+    if filter_by:
+        query = query.filter_by(**filter_by)
+    field = getattr(Permission, sort_field)
+    order_by = getattr(field, sort_dir.lower())()
+    return query.order_by(order_by).offset(offset).limit(limit).all()
+
 def get_permissions_by_ids(ids):
     return Permission.query.filter(Permission.id.in_(ids)).all()
 
