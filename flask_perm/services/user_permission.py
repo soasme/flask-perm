@@ -27,6 +27,9 @@ def delete(user_permission_id):
         db.session.delete(user_permission)
     db.session.commit()
 
+def get(id):
+    return UserPermission.query.get(id)
+
 def delete_by_user(user_id):
     user_permissions = UserPermission.query.filter_by(
         user_id=user_id
