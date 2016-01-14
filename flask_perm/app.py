@@ -39,9 +39,9 @@ class Perm(object):
         from . import models
         db.create_all()
 
-        from .controllers import bp
-        bp.perm = self
-        app.register_blueprint(bp, url_prefix=app.config.get('PERM_URL_PREFIX'))
+        from .controllers import bp as api_bp
+        api_bp.perm = self
+        app.register_blueprint(api_bp, url_prefix=app.config.get('PERM_ADMIN_API_PREFIX'))
     def log_admin_action(self, msg):
         if self.app.config.get('PERM_ADMIN_ECHO'):
             self.admin_logger.info(msg)
