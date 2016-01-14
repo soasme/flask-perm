@@ -3,6 +3,7 @@
 import logging
 import json
 from flask import Blueprint, request, jsonify, current_app
+from sqlalchemy.exc import IntegrityError
 from .core import db
 from .services import (
     UserGroupService, PermissionService, UserGroupMemberService,
@@ -38,6 +39,9 @@ def before_request():
     if not bp.perm.has_perm_admin_logined():
         return forbidden()
 
+@bp.errorhandler(IntegrityError)
+def detect_integrity_error(e):
+    return bad_request('conflict')
 
 @bp.route('/permissions', methods=['POST'])
 def add_permission():
