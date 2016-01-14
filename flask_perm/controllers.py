@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import json
 from flask import Blueprint, request, jsonify, current_app
 from .core import db
@@ -27,6 +28,11 @@ def check_auth(username, password):
     return current_app.config['PERM_ADMIN_USERNAME'] == username and \
         current_app.config['PERM_ADMIN_PASSWORD'] == password
 
+def log_action(data, **kwargs):
+    data = dict(data)
+    data.update(kwargs)
+    bp.perm.log_admin_action(data)
+
 @bp.before_request
 def before_request():
     if not bp.perm.has_perm_admin_logined():
@@ -44,6 +50,7 @@ def add_permission():
     code = data.get('code')
     permission = PermissionService.create(title, code)
     permission = PermissionService.rest(permission)
+    log_action(permission, action='add', model='permission')
     return ok(permission)
 
 def _get_filter_by():
@@ -85,6 +92,7 @@ def update_permission(permission_id):
     if request.get_json().get('code'):
         PermissionService.set_code(permission_id, request.get_json().get('code'))
     permission = PermissionService.rest(PermissionService.get(permission_id))
+    log_action(permission, action='update', model='permission')
     return ok(permission)
 
 @bp.route('/permissions/<int:permission_id>', methods=['DELETE'])
@@ -92,6 +100,7 @@ def delete_permission(permission_id):
     permission = PermissionService.get(permission_id)
     if not permission:
         return not_found()
+    log_action(PermissionService.rest(permission), action='delete', model='permission')
     UserPermissionService.delete_by_permission(permission_id)
     UserGroupPermissionService.delete_by_permission(permission_id)
     PermissionService.delete(permission_id)
@@ -123,10 +132,15 @@ def add_user_permission():
         return not_found()
     user_permission = UserPermissionService.create(user_id, permission_id)
     user_permission = UserPermissionService.rest(user_permission)
+    log_action(user_permission, action='add', model='user_permission')
     return ok(user_permission)
 
 @bp.route('/user_permissions/<int:user_permission_id>', methods=['DELETE'])
 def revoke_user_permission(user_permission_id):
+    user_permission = UserPermissionService.get(user_permission_id)
+    if not user_permission:
+        return not_found()
+    log_action(UserPermissionService.rest(user_permission), action='delete', model='user_permission')
     UserPermissionService.delete(user_permission_id)
     return ok()
 
@@ -155,22 +169,30 @@ def add_user_group_permission():
         return not_found()
     user_group_permission = UserGroupPermissionService.create(user_group_id, permission_id)
     user_group_permission = UserGroupPermissionService.rest(user_group_permission)
+    log_action(user_group_permission, action='add', model='user_permission')
     return ok(user_group_permission)
 
 @bp.route('/user_group_permissions/<int:user_group_permission_id>', methods=['DELETE'])
 def revoke_user_group_permission(user_group_permission_id):
+    user_group_permission = UserGroupPermissionService.get(user_group_permission_id)
+    if not user_group_permission:
+        return not_found()
+    log_action(UserGroupPermissionService.rest(user_group_permission),
+               action='delete', model='user_group_permission')
     UserGroupPermissionService.delete(user_group_permission_id)
     return ok()
 
 @bp.route('/user_groups', methods=['POST'])
 def add_user_group():
-    data = request.get_json()
-    if 'title' not in data:
-        return bad_request('missing title field')
-    if not data['title']:
-        return bad_request('title is blank')
-    user_group = UserGroupService.create(data['title'])
+    try:
+        data = request.get_json()
+        title = data['title']
+        code = data['code']
+    except KeyError:
+        return bad_request()
+    user_group = UserGroupService.create(title, code)
     user_group = UserGroupService.rest(user_group)
+    log_action(user_group, action='add', model='user_group')
     return ok(user_group)
 
 @bp.route('/user_groups')
@@ -204,6 +226,7 @@ def update_user_group(user_group_id):
     if 'code' in data and data['code']:
         UserGroupService.update_code(user_group_id, data['code'])
     user_group = UserGroupService.rest(UserGroupService.get(user_group_id))
+    log_action(user_group, action='update', model='user_group')
     return ok(user_group)
 
 @bp.route('/user_groups/<int:user_group_id>', methods=['DELETE'])
@@ -211,6 +234,7 @@ def delete_user_group(user_group_id):
     user_group = UserGroupService.get(user_group_id)
     if not user_group:
         return not_found()
+    log_action(UserGroupService.rest(user_group), action='delete', model='user_group')
     UserGroupPermissionService.delete_by_user_group(user_group_id)
     UserGroupService.delete(user_group_id)
     return ok()
@@ -239,10 +263,15 @@ def add_user_group_member():
         return not_found()
     member = UserGroupMemberService.create(user_id, user_group_id)
     member = UserGroupMemberService.rest(member)
+    log_action(member, action='add', model='user_group_member')
     return ok(member)
 
 @bp.route('/user_group_members/<int:user_group_member_id>', methods=['DELETE'])
 def delete_user_from_user_group(user_group_member_id):
+    user_group_member = UserGroupMemberService.get(user_group_member_id)
+    if not user_group_member:
+        return not_found()
+    log_action(UserGroupMemberService.rest(user_group_member), action='delete', model='user_group_member')
     UserGroupMemberService.delete(user_group_member_id)
     return ok()
 
