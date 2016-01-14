@@ -57,17 +57,30 @@ class Perm(object):
         return _
 
     def login_perm_admin(self):
-        session['perm_admin'] = '1'
+        data = self.app.config.get('PERM_ADMIN_USERNAME') + '.' + \
+               self.app.config.get('PERM_ADMIN_PASSWORD')
+        session['perm_admin'] = generate_password_hash(data)
 
     def logout_perm_admin(self):
         session.pop('perm_admin', None)
 
     def has_perm_admin_logined(self):
-        return session.get('perm_admin') == '1'
+        return self.check_perm_admin_session()
 
     def check_perm_admin_auth(self, username, password):
         return username == self.app.config.get('PERM_ADMIN_USERNAME') and \
             password == self.app.config.get('PERM_ADMIN_PASSWORD')
+
+    def check_perm_admin_session(self):
+        if request.authorization:
+            auth = request.authorization
+            return self.check_perm_admin_auth(auth.username, auth.password)
+        perm_admin = session.get('perm_admin')
+        if not perm_admin:
+            return False
+        data = self.app.config.get('PERM_ADMIN_USERNAME') + '.' + \
+               self.app.config.get('PERM_ADMIN_PASSWORD')
+        return check_password_hash(perm_admin, data)
 
     def user_loader(self, callback):
         self.user_callback = callback
