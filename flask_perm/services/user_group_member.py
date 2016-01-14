@@ -45,6 +45,12 @@ def get_user_groups_by_user(user_id):
     ).all()
     return [row.user_group_id for row in rows]
 
+def is_user_in_groups(user_id, user_group_ids):
+    return bool(UserGroupMember.query.filter(
+        UserGroupMember.user_id == user_id,
+        UserGroupMember.user_group_id.in_(user_group_ids)
+    ).first())
+
 def filter_user_group_members(filter_by, offset, limit, sort_field='created_at', sort_dir='desc'):
     query = UserGroupMember.query
     if filter_by:

@@ -32,6 +32,12 @@ def update_code(id, code):
     db.session.commit()
     return user_group
 
+def get_by_code(code):
+    return UserGroup.query.filter_by(code=code).first()
+
+def get_user_groups_by_codes(codes):
+    return UserGroup.query.filter(UserGroup.code.in_(codes)).all()
+
 def get_user_groups():
     return UserGroup.query.all()
 
