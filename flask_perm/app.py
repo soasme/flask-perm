@@ -30,8 +30,10 @@ class Perm(object):
         db.init_app(app)
 
         app.config.setdefault('PERM_USERS_GETTER', lambda: [])
-        app.config.setdefault('PERM_URL_PERFIX', '/perm')
         app.config.setdefault('PERM_CURRENT_USER_ACCESS_VALIDATOR', lambda user: False)
+        app.config.setdefault('PERM_ADMIN_API_PREFIX', '/perm-admin/api')
+        app.config.setdefault('PERM_ADMIN_PREFIX', '/perm-admin')
+
         if app.config.get('PERM_ADMIN_ECHO'):
             self.admin_logger.setLevel(logging.INFO)
             self.admin_logger.addHandler(logging.StreamHandler())
