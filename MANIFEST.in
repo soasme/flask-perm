@@ -1,2 +1,2 @@
-flask_perm/templates/*
-flask_perm/static/*
+include flask_perm/templates/*
+include flask_perm/static/*
