@@ -115,5 +115,29 @@ PermAdmin.config(['NgAdminConfigurationProvider', function (nga) {
   ]);
 
 
+  // ...
+  // attach the admin application to the DOM and execute it
+  var makeIcon = function(cls) {
+    return '<span class="glyphicon '+ cls + '"></span>'
+  };
+
+  var menuIcons = {
+    user: makeIcon('glyphicon-user'),
+    userGroup: makeIcon('glyphicon-user'),
+    permission: makeIcon('glyphicon-minus-sign'),
+    userPermission: makeIcon('glyphicon-pencil'),
+    userGroupPermission: makeIcon('glyphicon-pencil'),
+    userGroupMember: makeIcon('glyphicon-pencil'),
+  };
+  admin.menu(
+    nga.menu()
+      .addChild(nga.menu(user).icon(menuIcons.user))
+      .addChild(nga.menu(userGroup).icon(menuIcons.userGroup))
+      .addChild(nga.menu(permission).icon(menuIcons.permission))
+      .addChild(nga.menu(userPermission).icon(menuIcons.userPermission))
+      .addChild(nga.menu(userGroupPermission).icon(menuIcons.userGroupPermission))
+      .addChild(nga.menu(userGroupMember).icon(menuIcons.userGroupMember))
+  );
+
   nga.configure(admin);
 }]);
