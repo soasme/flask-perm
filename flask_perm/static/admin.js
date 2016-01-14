@@ -82,5 +82,19 @@ PermAdmin.config(['NgAdminConfigurationProvider', function (nga) {
   userPermission.showView().disable();
 
 
+  userGroupPermission.listView().fields([
+    fields.userGroup,
+    fields.permission,
+  ]).filters([
+    fields.userGroup,
+    fields.permission,
+  ]);
+
+  userGroupPermission.creationView().fields([
+    fields.userGroup,
+    fields.permission,
+  ]);
+
+  userGroupPermission.showView().disable();
   nga.configure(admin);
 }]);
