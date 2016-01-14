@@ -25,6 +25,13 @@ def rename(id, title):
     db.session.commit()
     return user_group
 
+def update_code(id, code):
+    user_group = UserGroup.query.get(id)
+    user_group.code = code
+    db.session.add(user_group)
+    db.session.commit()
+    return user_group
+
 def get_user_groups():
     return UserGroup.query.all()
 
@@ -35,7 +42,16 @@ def rest(user_group):
     return dict(
         id=user_group.id,
         title=user_group.title,
+        code=user_group.code,
     )
 
 def get(id):
     return UserGroup.query.get(id)
+
+def filter_user_groups(filter_by, offset, limit, sort_field='created_at', sort_dir='desc'):
+    query = UserGroup.query
+    if filter_by:
+        query = query.filter_by(**filter_by)
+    field = getattr(UserGroup, sort_field)
+    order_by = getattr(field, sort_dir.lower())()
+    return query.order_by(order_by).offset(offset).limit(limit).all()
