@@ -20,11 +20,8 @@ def create(user_id, user_group_id):
         ).first()
     return member
 
-def delete(user_id, user_group_id):
-    member = UserGroupMember.query.filter_by(
-        user_id=user_id,
-        user_group_id=user_group_id,
-    ).first()
+def delete(id):
+    member = UserGroupMember.query.get(id)
     if member:
         db.session.delete(member)
     db.session.commit()
@@ -44,3 +41,18 @@ def get_user_groups_by_user(user_id):
         UserGroupMember.user_group_id
     ).all()
     return [row.user_group_id for row in rows]
+
+def filter_user_group_members(filter_by, offset, limit, sort_field='created_at', sort_dir='desc'):
+    query = UserGroupMember.query
+    if filter_by:
+        query = query.filter_by(**filter_by)
+    field = getattr(UserGroupMember, sort_field)
+    order_by = getattr(field, sort_dir.lower())()
+    return query.order_by(order_by).offset(offset).limit(limit).all()
+
+def rest(obj):
+    return dict(
+        id=obj.id,
+        user_id=obj.user_id,
+        user_group_id=obj.user_group_id,
+    )
