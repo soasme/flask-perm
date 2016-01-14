@@ -153,3 +153,14 @@ PermAdmin.config(['NgAdminConfigurationProvider', function (nga) {
 
   nga.configure(admin);
 }]);
+
+PermAdmin.config(['RestangularProvider', function(RestangularProvider) {
+  RestangularProvider.addResponseInterceptor(
+    function(data, operation, what, url, response, deferred) {
+      var extractedData;
+      extractedData = data.data;
+      return extractedData;
+    }
+  );
+
+}]);
