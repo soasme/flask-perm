@@ -10,6 +10,7 @@ perm = Perm()
 app.config['DEBUG'] = True
 app.config['SECRET_KEY'] = 'secret key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/flask_perm.db'
+app.config['PERM_ADMIN_ECHO'] = True
 app.config['PERM_ADMIN_USERNAME'] = 'admin'
 app.config['PERM_ADMIN_PASSWORD'] = 'test'
 app.config['PERM_SUPER_ADMIN_USER_IDS'] = [1]
