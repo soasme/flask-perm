@@ -1,13 +1,34 @@
 # -*- coding: utf-8 -*-
 
 import json
-
+import base64
+from functools import partial
 from pytest import fixture
 from flask import url_for
 
+class Client(object):
+
+    def __init__(self, app):
+        self.app = app
+
+    @property
+    def client(self):
+        return self.app.test_client()
+
+    def request(self, method, url, **kwargs):
+        headers = kwargs.get('headers', {})
+        code = '%s:%s' % (self.app.config['PERM_ADMIN_USERNAME'], self.app.config['PERM_ADMIN_PASSWORD'])
+        headers['Authorization'] = 'Basic ' + base64.b64encode(code)
+        kwargs['headers'] = headers
+        return self.client.open(url, method=method, **kwargs)
+
+    def __getattr__(self, method):
+        return partial(self.request, method)
+
 @fixture
 def client(app, perm):
-    return app.test_client()
+    return Client(app)
+
 
 @fixture
 def permission(request, client):
@@ -17,16 +38,17 @@ def permission(request, client):
         data=json.dumps(dict(title='Test Permission', code=code)),
         content_type='application/json',
     )
-    return json.loads(resp.data)['data']['permission']
+    return json.loads(resp.data)['data']
 
 @fixture
-def user_group(client):
+def user_group(request, client):
+    code = 'code.%s.%s' % (request.module.__name__, request.function.__name__)
     resp = client.post(
         url_for('flask_perm_api.add_user_group'),
-        data=json.dumps(dict(title='Test UserGroup')),
+        data=json.dumps(dict(title='Test UserGroup', code=code)),
         content_type='application/json',
     )
-    return json.loads(resp.data)['data']['user_group']
+    return json.loads(resp.data)['data']
 
 def test_add_permission(permission):
     assert permission['id']
@@ -36,7 +58,21 @@ def test_add_permission(permission):
 def test_get_permissions(client, permission):
     resp = client.get(url_for('flask_perm_api.get_permissions'))
     assert resp.status_code == 200
-    assert permission in json.loads(resp.data)['data']['permissions']
+    assert permission in json.loads(resp.data)['data']
+
+def test_filter_permission_by_id0(client, permission):
+    resp = client.get(url_for('flask_perm_api.get_permissions'), query_string={
+        '_filters': '{"id": 0}',
+    })
+    assert resp.status_code == 200
+    assert not json.loads(resp.data)['data']
+
+def test_filter_permission_by_permission_id(client, permission):
+    resp = client.get(url_for('flask_perm_api.get_permissions'), query_string={
+        '_filters': '{"id": %s}' % permission['id'],
+    })
+    assert resp.status_code == 200
+    assert permission in json.loads(resp.data)['data']
 
 def test_get_permission(client, permission):
     resp = client.get(
@@ -46,10 +82,10 @@ def test_get_permission(client, permission):
         )
     )
     assert resp.status_code == 200
-    assert permission == json.loads(resp.data)['data']['permission']
+    assert permission == json.loads(resp.data)['data']
 
 def test_update_permission(client, permission):
-    resp = client.patch(
+    resp = client.put(
         url_for(
             'flask_perm_api.update_permission',
             permission_id=permission['id'],
@@ -59,9 +95,9 @@ def test_update_permission(client, permission):
     )
     assert resp.status_code == 200
     data = json.loads(resp.data)
-    assert data['data']['permission']['id']
-    assert data['data']['permission']['title'] == 'Test Permission!'
-    assert data['data']['permission']['code'] == 'test_blueprint.test_update_permission!'
+    assert data['data']['id']
+    assert data['data']['title'] == 'Test Permission!'
+    assert data['data']['code'] == 'test_blueprint.test_update_permission!'
 
 
 
@@ -81,79 +117,117 @@ def test_delete_permission(client, permission):
     )
     assert resp.status_code == 404
 
-def test_add_user_permission(client, permission, perm):
-    resp = client.put(
+def add_user_permission(client, user_id, permission_id):
+    return client.post(
         url_for(
             'flask_perm_api.add_user_permission',
-            user_id=1,
-            permission_id=permission['id']
-        )
+        ),
+        data=json.dumps(dict(
+            user_id=user_id,
+            permission_id=permission_id
+        )),
+        content_type='application/json',
     )
+
+def add_user_group_member(client, user_id, user_group_id):
+    return client.post(
+        url_for(
+            'flask_perm_api.add_user_group_member',
+        ),
+        data=json.dumps(dict(
+            user_id=user_id,
+            user_group_id=user_group_id,
+        )),
+        content_type='application/json',
+    )
+
+def add_user_group_permission(client, user_group_id, permission_id):
+    return client.post(
+        url_for(
+            'flask_perm_api.add_user_group_permission',
+        ),
+        data=json.dumps(dict(
+            user_group_id=user_group_id,
+            permission_id=permission_id
+        )),
+        content_type='application/json',
+    )
+
+def test_add_user_permission(client, permission, perm):
+    resp = add_user_permission(client, 1, permission['id'])
     assert resp.status_code == 200
     assert perm.has_permission(1, 'tests.test_blueprint.test_add_user_permission')
 
 def test_revoke_user_permission(client, perm, permission):
-    resp = client.put(
-        url_for(
-            'flask_perm_api.add_user_permission',
-            user_id=1,
-            permission_id=permission['id']
-        )
-    )
+    resp = add_user_permission(client, 1, permission['id'])
+    id = json.loads(resp.data)['data']['id']
     resp = client.delete(
         url_for(
             'flask_perm_api.revoke_user_permission',
-            user_id=1,
-            permission_id=permission['id']
+            user_permission_id=id,
         )
     )
     assert resp.status_code == 200
     assert not perm.has_permission(1, 'tests.test_blueprint.test_revoke_user_permission')
 
 def test_add_user_group_permissions(client, permission, user_group):
-    resp = client.put(
-        url_for(
-            'flask_perm_api.add_user_group_permission',
-            user_group_id=user_group['id'],
-            permission_id=permission['id']
-        )
-    )
+    resp = add_user_group_permission(client, user_group['id'], permission['id'])
     assert resp.status_code == 200
 
-
 def test_revoke_user_group_permissions(client, permission, user_group):
-    resp = client.put(
-        url_for(
-            'flask_perm_api.add_user_group_permission',
-            user_group_id=user_group['id'],
-            permission_id=permission['id']
-        )
-    )
+    resp = add_user_group_permission(client, user_group['id'], permission['id'])
+    id = json.loads(resp.data)['data']['id']
     resp = client.delete(
         url_for(
             'flask_perm_api.revoke_user_group_permission',
-            user_group_id=user_group['id'],
-            permission_id=permission['id']
+            user_group_permission_id=id,
         )
     )
     assert resp.status_code == 200
 
-def test_get_user_permissions(client, permission):
-    resp = client.put(
-        url_for(
-            'flask_perm_api.add_user_permission',
-            user_id=1,
-            permission_id=permission['id']
-        )
-    )
+def test_get_user_permissions_by_user_id(client, permission):
+    resp = add_user_permission(client, 1, permission['id'])
     resp = client.get(
         url_for(
             'flask_perm_api.get_user_permissions',
-            user_id=1
-        )
+        ),
+        query_string={'_filters': '{"user_id":1}'}
     )
     assert resp.status_code ==200
-    assert json.loads(resp.data)['data']['permissions']
+    assert json.loads(resp.data)['data']
+
+def test_get_user_permissions_by_permission_id(client, permission):
+    resp = add_user_permission(client, 1, permission['id'])
+    resp = client.get(
+        url_for(
+            'flask_perm_api.get_user_permissions',
+        ),
+        query_string={'_filters': '{"permission_id":%s}' % permission['id']}
+    )
+    assert resp.status_code ==200
+    assert json.loads(resp.data)['data']
+
+def test_get_user_group_permissions_by_user_id(client, permission):
+    resp = add_user_group_permission(client, 1, permission['id'])
+    resp = client.get(
+        url_for(
+            'flask_perm_api.get_user_group_permissions',
+        ),
+        query_string={'_filters': '{"user_group_id":1}'}
+    )
+    assert resp.status_code ==200
+    assert json.loads(resp.data)['data']
+
+def test_get_user_group_permissions_by_permission_id(client, permission):
+    resp = add_user_group_permission(client, 1, permission['id'])
+    resp = client.get(
+        url_for(
+            'flask_perm_api.get_user_group_permissions',
+        ),
+        query_string={'_filters': '{"permission_id":%s}' % permission['id']}
+    )
+    assert resp.status_code ==200
+    assert json.loads(resp.data)['data']
 
 def test_add_user_group(client, user_group):
     assert user_group['id']
@@ -165,10 +239,10 @@ def test_get_user_groups(client, user_group):
         )
     )
     assert resp.status_code == 200
-    assert json.loads(resp.data)['data']['user_groups']
+    assert json.loads(resp.data)['data']
 
 def test_update_user_group(client, user_group):
-    resp = client.patch(
+    resp = client.put(
         url_for(
             'flask_perm_api.update_user_group',
             user_group_id=user_group['id'],
@@ -177,7 +251,7 @@ def test_update_user_group(client, user_group):
         content_type='application/json'
     )
     assert resp.status_code == 200
-    assert json.loads(resp.data)['data']['user_group']['title'] == 'updated'
+    assert json.loads(resp.data)['data']['title'] == 'updated'
 
 def test_delete_user_group(client, user_group):
     resp = client.delete(
@@ -189,48 +263,40 @@ def test_delete_user_group(client, user_group):
     assert resp.status_code == 200
 
 def test_add_user_to_user_group(client, user_group):
-    resp = client.put(
-        url_for(
-            'flask_perm_api.add_user_to_user_group',
-            user_id=1,
-            user_group_id=user_group['id'],
-        )
-    )
+    resp = add_user_group_member(client, 1, user_group['id'])
     assert resp.status_code == 200
 
 def test_delete_user_from_user_group(client, user_group):
-    resp = client.put(
-        url_for(
-            'flask_perm_api.add_user_to_user_group',
-            user_id=1,
-            user_group_id=user_group['id'],
-        )
-    )
+    resp = add_user_group_member(client, 1, user_group['id'])
+    id = json.loads(resp.data)['data']['id']
     resp = client.delete(
         url_for(
             'flask_perm_api.delete_user_from_user_group',
-            user_id=1,
-            user_group_id=user_group['id'],
+            user_group_member_id=id
         )
     )
     assert resp.status_code == 200
 
 def test_get_user_group_members(client, user_group):
+    add_user_group_member(client, 1, user_group['id'])
     resp = client.get(
         url_for(
             'flask_perm_api.get_user_group_members',
-            user_group_id=user_group['id']
-        )
+        ),
+        query_string={
+            '_filters': '{"user_group_id":%s}' % user_group['id'],
+        }
+
     )
     assert resp.status_code == 200
-    assert isinstance(json.loads(resp.data)['data']['users'], list)
+    assert json.loads(resp.data)['data']
 
 def test_get_users(client):
     resp = client.get(url_for('flask_perm_api.get_users'))
     assert resp.status_code == 200
-    assert isinstance(json.loads(resp.data)['data']['users'], list)
+    assert isinstance(json.loads(resp.data)['data'], list)
 
 def test_get_user(client):
     resp = client.get(url_for('flask_perm_api.get_user', user_id=1))
     assert resp.status_code == 200
-    assert json.loads(resp.data)['data']['user']['id'] == 1
+    assert json.loads(resp.data)['data']['id'] == 1
