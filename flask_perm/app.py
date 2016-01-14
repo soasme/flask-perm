@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from functools import wraps
-
+from flask import session
 from .core import db
 
 class Perm(object):
@@ -38,6 +38,26 @@ class Perm(object):
         from .controllers import bp
         bp.perm = self
         app.register_blueprint(bp, url_prefix=app.config.get('PERM_URL_PREFIX'))
+    def require_perm_admin(self, f):
+        @wraps(f)
+        def _(*args, **kwargs):
+            if not session.get('perm_admin'):
+                raise self.Denied
+            return f(*args, **kwargs)
+        return _
+
+    def login_perm_admin(self):
+        session['perm_admin'] = '1'
+
+    def logout_perm_admin(self):
+        session.pop('perm_admin', None)
+
+    def has_perm_admin_logined(self):
+        return session.get('perm_admin') == '1'
+
+    def check_perm_admin_auth(self, username, password):
+        return username == self.app.config.get('PERM_ADMIN_USERNAME') and \
+            password == self.app.config.get('PERM_ADMIN_PASSWORD')
 
     def user_loader(self, callback):
         self.user_callback = callback
