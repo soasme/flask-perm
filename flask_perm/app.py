@@ -14,6 +14,7 @@ class Perm(object):
         self.user_callback = None
         self.current_user_callback = None
         self.users_callback = None
+        self.users_count_callback = None
         if app is not None:
             self.init_app(app)
 
@@ -50,6 +51,10 @@ class Perm(object):
         self.users_callback = callback
         return callback
 
+    def users_count_loader(self, callback):
+        self.users_count_callback = callback
+        return callback
+
     def load_user(self, user_id):
         if self.user_callback is None:
             raise NotImplementedError('You must register user_loader!')
@@ -64,6 +69,10 @@ class Perm(object):
         if self.users_callback is None:
             raise NotImplementedError('You must register users_loader!')
         return self.users_callback()
+    def load_users_count(self):
+        if self.users_count_callback is None:
+            raise NotImplementedError('You must register users_count_loader')
+        return self.users_count_callback()
 
     def has_permission(self, user_id, code):
         from .services import VerificationService, PermissionService
