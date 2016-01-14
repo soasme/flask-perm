@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import Blueprint, render_template, current_app, abort, url_for, redirect, request, flash
-from flask_login import login_user, logout_user
+from flask import Blueprint, render_template, current_app, url_for, redirect, request, flash
 
 bp = Blueprint('perm-admin', __name__, template_folder='templates', static_folder='static')
 
