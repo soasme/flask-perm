@@ -150,6 +150,42 @@ class Perm(object):
         permissions = PermissionService.get_permissions()
         return [permission.code for permission in permissions]
 
+    def require_group(self, *groups):
+        from .services import UserGroupService, UserGroupMemberService
+
+        if self.current_user_callback is None:
+            raise NotImplementedError('You must register current_user_loader!')
+
+        def deco(func):
+            @wraps(func)
+            def _(*args, **kwargs):
+                current_user = self.current_user_callback()
+
+                if not current_user:
+                    raise self.Denied
+
+                current_user_id = current_user.id
+
+                if not groups:
+                    is_allowed = True
+                elif '*' in groups:
+                    is_allowed = True
+                else:
+                    user_groups = UserGroupService.get_user_groups_by_codes(groups)
+                    user_group_ids = [user_group.id for user_group in user_groups]
+                    if not user_group_ids:
+                        is_allowed = False
+                    else:
+                        print current_user_id, user_group_ids
+                        is_allowed = UserGroupMemberService.is_user_in_groups(
+                            current_user_id, user_group_ids)
+                if is_allowed:
+                    return func(*args, **kwargs)
+                else:
+                    raise self.Denied
+            return _
+        return deco
+
     def require_permission(self, *codes):
         if self.current_user_callback is None:
             raise NotImplementedError('You must register current_user_loader!')
@@ -159,6 +195,9 @@ class Perm(object):
             def _(*args, **kwargs):
 
                 current_user = self.current_user_callback()
+                if not current_user:
+                    raise self.Denied
+
                 current_user_id = current_user.id
 
                 if not codes:
