@@ -67,6 +67,10 @@ PermAdmin.config(['NgAdminConfigurationProvider', function (nga) {
 
   userGroup.editionView().fields(userGroup.creationView().fields());
 
+  user.listView().fields([
+    fields.nickname,
+  ]);
+
   userPermission.listView().fields([
     fields.user,
     fields.permission,
