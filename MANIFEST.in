@@ -1,0 +1,2 @@
+flask_perm/templates/*
+flask_perm/static/*
