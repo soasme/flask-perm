@@ -155,6 +155,18 @@ PermAdmin.config(['NgAdminConfigurationProvider', function (nga) {
 }]);
 
 PermAdmin.config(['RestangularProvider', function(RestangularProvider) {
+  RestangularProvider.addFullRequestInterceptor(
+    function(element, operation, what, url, headers, params) {
+      if (operation === "getList") {
+        if (params._page) {
+          params.offset = (params._page - 1) * params._perPage;
+          params.limit = params._perPage;
+        }
+      }
+      return {params: params};
+    }
+  );
+
   RestangularProvider.addResponseInterceptor(
     function(data, operation, what, url, response, deferred) {
       var extractedData;
