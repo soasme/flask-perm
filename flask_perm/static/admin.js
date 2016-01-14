@@ -39,5 +39,20 @@ PermAdmin.config(['NgAdminConfigurationProvider', function (nga) {
   admin.addEntity(userPermission);
   admin.addEntity(userGroupPermission);
   admin.addEntity(userGroupMember);
+
+  permission.listView().fields([
+    fields.title.isDetailLink(true),
+    fields.code,
+  ]).filters([
+    fields.title,
+    fields.code,
+  ]);
+
+  permission.creationView().fields([
+    fields.title.validation({ required: true}),
+    fields.code.validation({ required: true}),
+  ]);
+
+  permission.editionView().fields(permission.creationView().fields());
   nga.configure(admin);
 }]);
