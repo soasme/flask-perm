@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logging
 from functools import wraps
 from flask import session, request
 from werkzeug.security import generate_password_hash
