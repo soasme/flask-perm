@@ -1,0 +1,24 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="description" content="">
+    <title>Login</title>
+  </head>
+  <body class="login-body">
+    <form method="post" class="form-login">
+      <div class="login-wrap">
+        <input type="text" name="username" placeholder="username"
+               autocomplete="off" autofocus class="form-control">
+        <input type="text" name="password" placeholder="password"
+               autocomplete="off" class="form-control">
+        <button class="btn btn-login btn-block" type="submit">
+          Login
+        </button>
+        {% if error %}
+        <p class=error><strong>Error: </strong> {{ error }}</p>
+        {% endif %}
+      </div>
+    </form>
+  </body>
+</html>

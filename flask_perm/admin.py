@@ -13,3 +13,21 @@ def index():
     }
 
     return render_template('/perm-admin/index.html', **render_data)
+
+@bp.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if bp.perm.check_perm_admin_auth(username, password):
+            bp.perm.login_perm_admin()
+            return redirect(url_for('perm-admin.index'))
+        else:
+            flash(u'Invalid Password', 'error')
+            return redirect(url_for('perm-admin.login'))
+    return render_template('/perm-admin/login.html')
+
+@bp.route('/logout')
+def logout():
+    bp.perm.logout_perm_admin()
+    return redirect(url_for('perm-admin.login'))
