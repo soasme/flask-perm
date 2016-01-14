@@ -2,6 +2,8 @@
 
 from functools import wraps
 from flask import session
+from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash
 from .core import db
 
 class Perm(object):
