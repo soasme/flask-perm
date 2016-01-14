@@ -9,5 +9,11 @@ PermAdmin.config(['NgAdminConfigurationProvider', function (nga) {
     window.g.debug
   ).baseApiUrl(window.g.baseApiUrl);
   // more configuration here later
+  var permission = nga.entity('permissions');
+  var user = nga.entity('users').readOnly();
+  var userGroup = nga.entity('user_groups');
+  var userPermission = nga.entity('user_permissions');
+  var userGroupMember = nga.entity('user_group_members');
+  var userGroupPermission = nga.entity('user_group_permissions');
   nga.configure(admin);
 }]);
