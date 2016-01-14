@@ -12,7 +12,7 @@ setup(
     license='MIT',
     author='Ju Lin',
     author_email='soasme@gmail.com',
-    description='Flask Authentication Contrib',
+    description='Flask Permission Management Extension',
     long_description=__doc__,
     packages=['flask_perm'],
     zip_safe=False,
