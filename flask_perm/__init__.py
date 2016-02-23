@@ -2,3 +2,5 @@
 
 from .app import Perm
 from . import services
+
+__version__ = '0.1.9'
