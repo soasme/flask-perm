@@ -35,6 +35,7 @@ class Perm(object):
 
         app.config.setdefault('PERM_ADMIN_API_PREFIX', '/perm-admin/api')
         app.config.setdefault('PERM_ADMIN_PREFIX', '/perm-admin')
+        app.config.setdefault('PERM_ADMIN_ECHO', False)
 
         if app.config.get('PERM_ADMIN_ECHO'):
             self.admin_logger.setLevel(logging.INFO)
