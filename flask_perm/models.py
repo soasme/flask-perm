@@ -4,6 +4,15 @@ from datetime import datetime
 
 from .core import db
 
+class SuperAdmin(db.Model):
+
+    __tablename__ = 'perm_super_admin'
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(64), nullable=False)
+    password = db.Column(db.String(40), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
 class Permission(db.Model):
 
     __tablename__ = 'perm_permission'
