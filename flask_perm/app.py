@@ -67,7 +67,7 @@ class Perm(object):
             return f(*args, **kwargs)
         return _
 
-    def set_super_admin(self, email, password):
+    def create_super_admin(self, email, password):
         from .services import SuperAdminService
         try:
             superadmin = SuperAdminService.create(email, password)
@@ -83,7 +83,10 @@ class Perm(object):
         session.pop('perm_admin_id', None)
 
     def get_perm_admin_id_from_session(self):
-        return session.get('perm_admin_id')
+        from .services import SuperAdminService
+        admin_id = session.get('perm_admin_id')
+        super_admin = SuperAdminService.get(admin_id)
+        return super_admin and super_admin.id
 
     def get_perm_admin_id_by_auth(self, email, password):
         from .services import SuperAdminService
@@ -232,3 +235,7 @@ class Perm(object):
 
             return _
         return deco
+
+    def register_commands(self, flask_script_manager):
+        from .script import perm_manager
+        flask_script_manager.add_command('perm', perm_manager)
