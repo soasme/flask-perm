@@ -146,6 +146,17 @@ class Perm(object):
             return False
         return VerificationService.has_permission(user_id, permission.id)
 
+    def has_permissions(self, user_id, *codes):
+        if not codes:
+            return True
+        if '*' in codes:
+            return any(
+                self.has_permission(user_id, code)
+                for code in self.get_all_permission_codes()
+            )
+        else:
+            return any(self.has_permission(user_id, code) for code in codes)
+
     def get_user_permissions(self, user_id):
         from .services import VerificationService, PermissionService
         permission_ids = VerificationService.get_user_permissions(user_id)
@@ -210,22 +221,12 @@ class Perm(object):
                 if not current_user:
                     raise self.Denied
 
-                current_user_id = current_user.id
-
-                if not codes:
-                    is_allowed = True
-                if '*' in codes:
-                    is_allowed = any(
-                        self.has_permission(current_user_id, code)
-                        for code in self.get_all_permission_codes()
-                    )
-                else:
-                    is_allowed = any(self.has_permission(current_user_id, code) for code in codes)
+                is_allowed = self.has_permissions(current_user.id, *codes)
 
                 if is_allowed:
                     return func(*args, **kwargs)
                 else:
-                    raise self.__class__.Denied
+                    raise self.Denied
 
             return _
         return deco
