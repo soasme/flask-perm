@@ -30,6 +30,10 @@ class Perm(object):
         * PERM_DB
         * PERM_USERS_GETTER
         """
+        if not hasattr(app, 'extensions'):
+            app.extensions = {}
+        app.extensions['perm'] = self
+
         db.app = app
         db.init_app(app)
 
