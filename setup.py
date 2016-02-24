@@ -21,6 +21,7 @@ setup(
     install_requires=[
         'Flask',
         'Flask-SQLAlchemy',
+        'Flask-Bcrypt',
     ],
     classifiers=[
         'Framework :: Flask',
