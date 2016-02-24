@@ -25,7 +25,7 @@ class Perm(object):
             self.init_app(app)
 
     def init_app(self, app):
-        """
+        """Initialize Perm object.
         """
         if not hasattr(app, 'extensions'):
             app.extensions = {}
@@ -56,10 +56,14 @@ class Perm(object):
 
 
     def log_admin_action(self, msg):
+        '''Log msg to `flask.admin` logger.'''
         if self.app.config.get('PERM_ADMIN_ECHO'):
             self.admin_logger.info(msg)
 
     def require_perm_admin(self, f):
+        '''A decorator that can protect function from unauthorized request.
+
+        Used in perm admin dashboard.'''
         @wraps(f)
         def _(*args, **kwargs):
             if not session.get('perm_admin_id'):
@@ -68,6 +72,7 @@ class Perm(object):
         return _
 
     def create_super_admin(self, email, password):
+        """Create superadmin / Reset password."""
         from .services import SuperAdminService
         try:
             superadmin = SuperAdminService.create(email, password)
@@ -77,9 +82,11 @@ class Perm(object):
         return SuperAdminService.to_dict(superadmin)
 
     def login_perm_admin(self, super_admin_id):
+        """Get authorization to access perm admin dashboard."""
         session['perm_admin_id'] = super_admin_id
 
     def logout_perm_admin(self):
+        """Revoke authorization from accessing perm admin dashboard."""
         session.pop('perm_admin_id', None)
 
     def get_perm_admin_id_from_session(self):
@@ -95,27 +102,61 @@ class Perm(object):
             return super_admin and super_admin.id
 
     def get_perm_admin_id(self):
+        """Get super admin id. Both basic authorization and cookie are support."""
         if request.authorization:
             auth = request.authorization
             return self.get_perm_admin_id_by_auth(auth.username, auth.password)
         return self.get_perm_admin_id_from_session()
 
     def has_perm_admin_logined(self):
+        """"""
         return bool(self.get_perm_admin_id())
 
     def user_loader(self, callback):
+        """Define user loader.
+
+        Required if you plan to use perm admin dashboard.
+        The callback will be used to render user basic information in dashboard.
+
+        Callback must take `user_id` integer parameter.
+        """
         self.user_callback = callback
         return callback
 
     def current_user_loader(self, callback):
+        """Define current user loader.
+
+        Required if you plan to use decorator to protect your function.
+        The callback will be used in deciding whether current user has authority.
+
+        Callback takes no parameters.
+        """
         self.current_user_callback = callback
         return callback
 
     def users_loader(self, callback):
+        """Define users loader.
+
+        Required if you plan to use perm admin dashboard.
+        The callback will be used to render whole user list in dashboard.
+
+        Callback must take 5 parameters:
+        * filter_by={},
+        * sort_field='created_at',
+        * sort_dir='desc',
+        * offset=0,
+        * limit=20
+        """
         self.users_callback = callback
         return callback
 
     def users_count_loader(self, callback):
+        """Define users count loader.
+
+        Required if you plan to use perm admin dashboard.
+        The callback will be used in paginating user list.
+
+        Callback takes no parameters."""
         self.users_count_callback = callback
         return callback
 
@@ -146,6 +187,9 @@ class Perm(object):
         return self.users_count_callback()
 
     def has_permission(self, user_id, code):
+        """Decide whether a user has a permission identified by `codes`.
+
+        Code is defined in perm admin dashboard."""
         from .services import VerificationService, PermissionService
         permission = PermissionService.get_by_code(code)
         if not permission:
@@ -153,6 +197,9 @@ class Perm(object):
         return VerificationService.has_permission(user_id, permission.id)
 
     def has_permissions(self, user_id, *codes):
+        """Decide whether a user has permissions identified by `codes`.
+
+        Codes are defined in perm admin dashboard."""
         if not codes:
             return True
         if '*' in codes:
@@ -164,6 +211,9 @@ class Perm(object):
             return any(self.has_permission(user_id, code) for code in codes)
 
     def get_user_permissions(self, user_id):
+        """Define all permission codes that authorized to a user.
+
+        Codes are defined in perm admin dashboard."""
         from .services import VerificationService, PermissionService
         permission_ids = VerificationService.get_user_permissions(user_id)
         permissions = map(PermissionService.get, permission_ids)
@@ -172,11 +222,17 @@ class Perm(object):
         return permissions
 
     def get_all_permission_codes(self):
+        """Get all permission codes.
+
+        WARNING: this might have performance issue."""
         from .services import PermissionService
         permissions = PermissionService.get_permissions()
         return [permission.code for permission in permissions]
 
     def is_user_in_groups(self, user_id, *groups):
+        """Decide whether a user is in groups.
+
+        Groups are defined in perm admin dashboard."""
         from .services import UserGroupService, UserGroupMemberService
         if not groups:
             return False
@@ -191,6 +247,9 @@ class Perm(object):
 
 
     def require_group(self, *groups):
+        """A decorator that can decide whether current user is in listed groups.
+
+        Groups are defined in perm admin dashboard."""
         from .services import UserGroupService, UserGroupMemberService
 
         if self.current_user_callback is None:
@@ -215,6 +274,9 @@ class Perm(object):
         return deco
 
     def require_permission(self, *codes):
+        """A decorator that can decide whether current user has listed permission codes.
+
+        Codes are defined in perm admin dashboard."""
         if self.current_user_callback is None:
             raise NotImplementedError('You must register current_user_loader!')
 
@@ -240,5 +302,11 @@ class Perm(object):
         return deco
 
     def register_commands(self, flask_script_manager):
+        """Register several convinient Flask-Script commands.
+
+        WARNING: make sure you have installed Flask-Script.
+
+        :param flask_script_manager: a flask.ext.script.Manager object.
+        """
         from .script import perm_manager
         flask_script_manager.add_command('perm', perm_manager)
