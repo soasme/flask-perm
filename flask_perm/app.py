@@ -25,10 +25,6 @@ class Perm(object):
 
     def init_app(self, app):
         """
-        Configuration Items:
-
-        * PERM_DB
-        * PERM_USERS_GETTER
         """
         if not hasattr(app, 'extensions'):
             app.extensions = {}
@@ -40,7 +36,6 @@ class Perm(object):
         bcrypt.app = app
         bcrypt.init_app(app)
 
-        app.config.setdefault('PERM_ADMIN_API_PREFIX', '/perm-admin/api')
         app.config.setdefault('PERM_ADMIN_PREFIX', '/perm-admin')
         app.config.setdefault('PERM_ADMIN_ECHO', False)
 
@@ -51,13 +46,13 @@ class Perm(object):
         from . import models
         db.create_all()
 
-        from .controllers import bp as api_bp
-        api_bp.perm = self
-        app.register_blueprint(api_bp, url_prefix=app.config.get('PERM_ADMIN_API_PREFIX'))
-
         from .admin import bp as admin_bp
-        admin_bp.perm = self
         app.register_blueprint(admin_bp, url_prefix=app.config.get('PERM_ADMIN_PREFIX'))
+
+        from .api import bp as api_bp
+        app.register_blueprint(api_bp, url_prefix=app.config.get('PERM_ADMIN_PREFIX') + '/api')
+
+
 
     def log_admin_action(self, msg):
         if self.app.config.get('PERM_ADMIN_ECHO'):
