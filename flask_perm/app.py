@@ -71,31 +71,29 @@ class Perm(object):
             return f(*args, **kwargs)
         return _
 
-    def login_perm_admin(self):
-        data = self.app.config.get('PERM_ADMIN_USERNAME') + '.' + \
-               self.app.config.get('PERM_ADMIN_PASSWORD')
-        session['perm_admin'] = generate_password_hash(data)
+    def login_perm_admin(self, super_admin_id):
+        session['perm_admin_id'] = super_admin_id
 
     def logout_perm_admin(self):
-        session.pop('perm_admin', None)
+        session.pop('perm_admin_id', None)
 
-    def has_perm_admin_logined(self):
-        return self.check_perm_admin_session()
+    def get_perm_admin_id_from_session(self):
+        return session.get('perm_admin_id')
 
-    def check_perm_admin_auth(self, username, password):
-        return username == self.app.config.get('PERM_ADMIN_USERNAME') and \
-            password == self.app.config.get('PERM_ADMIN_PASSWORD')
+    def get_perm_admin_id_by_auth(self, email, password):
+        from .services import SuperAdminService
+        if SuperAdminService.verify_password(email, password):
+            super_admin = SuperAdminService.get_by_email(email)
+            return super_admin and super_admin.id
 
-    def check_perm_admin_session(self):
+    def get_perm_admin_id(self):
         if request.authorization:
             auth = request.authorization
-            return self.check_perm_admin_auth(auth.username, auth.password)
-        perm_admin = session.get('perm_admin')
-        if not perm_admin:
-            return False
-        data = self.app.config.get('PERM_ADMIN_USERNAME') + '.' + \
-               self.app.config.get('PERM_ADMIN_PASSWORD')
-        return check_password_hash(perm_admin, data)
+            return self.get_perm_admin_id_by_auth(auth.username, auth.password)
+        return self.get_perm_admin_id_from_session()
+
+    def has_perm_admin_logined(self):
+        return bool(self.get_perm_admin_id())
 
     def user_loader(self, callback):
         self.user_callback = callback
