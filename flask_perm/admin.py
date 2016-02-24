@@ -10,7 +10,7 @@ def index():
         return redirect(url_for('perm-admin.login'))
 
     render_data = {
-        'base_api_url': current_app.config.get('PERM_ADMIN_API_PREFIX'),
+        'base_api_url': current_app.config.get('PERM_ADMIN_PREFIX') + '/api',
         'base_web_url': current_app.config.get('PERM_ADMIN_PREFIX'),
         'debug': current_app.config.get('DEBUG'),
     }
