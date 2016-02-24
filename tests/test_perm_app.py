@@ -40,6 +40,7 @@ def test_require_group_passed(perm):
     )
     member = UserGroupMemberService.create(user_id=1, user_group_id=user_group.id)
     assert perm.require_group('test.require_group_passed')(lambda: True)()
+    assert perm.require_group('*')(lambda: True)()
 
 def test_require_group_failed(perm):
     from flask_perm.services import UserGroupService, UserGroupMemberService
@@ -50,3 +51,5 @@ def test_require_group_failed(perm):
     member = UserGroupMemberService.create(user_id=2, user_group_id=user_group.id)
     with raises(perm.Denied):
         assert perm.require_group('test.require_group_passed')(lambda: True)()
+    with raises(perm.Denied):
+        assert perm.require_group('*')(lambda: True)()
