@@ -5,7 +5,7 @@ from functools import wraps
 from flask import session, request
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
-from .core import db
+from .core import db, bcrypt
 
 class Perm(object):
 
@@ -32,6 +32,9 @@ class Perm(object):
         """
         db.app = app
         db.init_app(app)
+
+        bcrypt.app = app
+        bcrypt.init_app(app)
 
         app.config.setdefault('PERM_ADMIN_API_PREFIX', '/perm-admin/api')
         app.config.setdefault('PERM_ADMIN_PREFIX', '/perm-admin')
