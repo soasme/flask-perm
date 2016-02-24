@@ -45,3 +45,6 @@ def get(id):
 
 def get_by_email(email):
     return SuperAdmin.query.filter_by(email=email).first()
+
+def list():
+    return SuperAdmin.query.all()
