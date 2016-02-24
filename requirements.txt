@@ -7,3 +7,4 @@ SQLAlchemy==1.0.10
 Werkzeug==0.11.2
 wheel==0.24.0
 Flask-Bcrypt==0.7.1
+Flask-Script==2.0.3
