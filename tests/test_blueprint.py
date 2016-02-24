@@ -5,11 +5,13 @@ import base64
 from functools import partial
 from pytest import fixture
 from flask import url_for
+from flask_perm.services import SuperAdminService
 
 class Client(object):
 
-    def __init__(self, app):
+    def __init__(self, app, current_user=None):
         self.app = app
+        self.current_user = current_user
 
     @property
     def client(self):
@@ -17,7 +19,10 @@ class Client(object):
 
     def request(self, method, url, **kwargs):
         headers = kwargs.get('headers', {})
-        code = '%s:%s' % (self.app.config['PERM_ADMIN_USERNAME'], self.app.config['PERM_ADMIN_PASSWORD'])
+        code = '%s:%s' % (
+            'admin@example.org',
+            'test'
+        )
         headers['Authorization'] = 'Basic ' + base64.b64encode(code)
         kwargs['headers'] = headers
         return self.client.open(url, method=method, **kwargs)
@@ -26,8 +31,12 @@ class Client(object):
         return partial(self.request, method)
 
 @fixture
-def client(app, perm):
-    return Client(app)
+def super_admin(app, perm):
+    return SuperAdminService.create('admin@example.org', 'test')
+
+@fixture
+def client(app, perm, super_admin):
+    return Client(app, super_admin)
 
 
 @fixture
