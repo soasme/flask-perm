@@ -8,6 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_perm import Perm
 from flask_perm.core import db
 
+
 @fixture
 def app(request):
     flask_app = Flask(__name__)
@@ -45,4 +46,5 @@ def perm(app, request):
     perm.users_loader(users_loader)
 
     db.create_all()
+
     return perm

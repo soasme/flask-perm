@@ -38,6 +38,7 @@ def reset_password(id, password):
         super_admin.password = bcrypt.generate_password_hash(password)
         db.session.add(super_admin)
     db.session.commit()
+    return super_admin
 
 def get(id):
     return SuperAdmin.query.get(id)
