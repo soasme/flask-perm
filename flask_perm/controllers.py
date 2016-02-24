@@ -29,14 +29,17 @@ def check_auth(username, password):
     return current_app.config['PERM_ADMIN_USERNAME'] == username and \
         current_app.config['PERM_ADMIN_PASSWORD'] == password
 
+def current_perm():
+    return current_app.extensions['perm']
+
 def log_action(data, **kwargs):
     data = dict(data)
     data.update(kwargs)
-    bp.perm.log_admin_action(data)
+    current_perm().log_admin_action(data)
 
 @bp.before_request
 def before_request():
-    if not bp.perm.has_perm_admin_logined():
+    if not current_perm().has_perm_admin_logined():
         return forbidden()
 
 @bp.errorhandler(IntegrityError)
@@ -289,13 +292,13 @@ def get_users():
     sort_field = request.args.get('_sortField', 'created_at').lower()
     sort_dir = request.args.get('_sortDir', 'DESC').lower()
     filter_by = _get_filter_by()
-    users = bp.perm.load_users(filter_by, sort_field, sort_dir, offset, limit)
+    users = current_perm().load_users(filter_by, sort_field, sort_dir, offset, limit)
     users = map(jsonify_user, users)
     return ok(users)
 
 @bp.route('/users/<int:user_id>')
 def get_user(user_id):
-    user = bp.perm.load_user(user_id)
+    user = current_perm().load_user(user_id)
     if not user:
         return not_found()
     return ok(jsonify_user(user))
