@@ -7,6 +7,9 @@ from .core import db
 class SuperAdmin(db.Model):
 
     __tablename__ = 'perm_super_admin'
+    __table_args__ = (
+        db.UniqueConstraint('email', name='ux_super_admin_email'),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(64), nullable=False)
