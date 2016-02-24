@@ -61,3 +61,6 @@ def filter_user_groups(filter_by, offset, limit, sort_field='created_at', sort_d
     field = getattr(UserGroup, sort_field)
     order_by = getattr(field, sort_dir.lower())()
     return query.order_by(order_by).offset(offset).limit(limit).all()
+
+def get_all_user_group_ids():
+    return [group.id for group in UserGroup.query.all()]
