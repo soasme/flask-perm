@@ -3,6 +3,7 @@
 import logging
 from functools import wraps
 from flask import session, request
+from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 from .core import db, bcrypt
@@ -52,8 +53,6 @@ class Perm(object):
         from .api import bp as api_bp
         app.register_blueprint(api_bp, url_prefix=app.config.get('PERM_ADMIN_PREFIX') + '/api')
 
-
-
     def log_admin_action(self, msg):
         if self.app.config.get('PERM_ADMIN_ECHO'):
             self.admin_logger.info(msg)
@@ -61,10 +60,19 @@ class Perm(object):
     def require_perm_admin(self, f):
         @wraps(f)
         def _(*args, **kwargs):
-            if not session.get('perm_admin'):
+            if not session.get('perm_admin_id'):
                 raise self.Denied
             return f(*args, **kwargs)
         return _
+
+    def set_super_admin(self, email, password):
+        from .services import SuperAdminService
+        try:
+            superadmin = SuperAdminService.create(email, password)
+        except IntegrityError:
+            superadmin = SuperAdminService.get_by_email(email)
+            superadmin = SuperAdminService.reset_password(superadmin.id, password)
+        return SuperAdminService.to_dict(superadmin)
 
     def login_perm_admin(self, super_admin_id):
         session['perm_admin_id'] = super_admin_id
