@@ -196,7 +196,6 @@ class Perm(object):
                     if not user_group_ids:
                         is_allowed = False
                     else:
-                        print current_user_id, user_group_ids
                         is_allowed = UserGroupMemberService.is_user_in_groups(
                             current_user_id, user_group_ids)
                 if is_allowed:
