@@ -3,13 +3,16 @@ from collections import namedtuple
 from flask import Flask, g, render_template, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_perm import Perm
+from flask_script import Manager
 
 app = Flask(__name__)
+manager = Manager(app)
 db = SQLAlchemy()
 perm = Perm()
 app.config['DEBUG'] = True
 app.config['SECRET_KEY'] = 'secret key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/flask_perm.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PERM_ADMIN_ECHO'] = True
 app.config['PERM_ADMIN_USERNAME'] = 'admin'
 app.config['PERM_ADMIN_PASSWORD'] = 'test'
@@ -19,6 +22,7 @@ db.app = app
 db.init_app(app)
 perm.app = app
 perm.init_app(app)
+perm.register_commands(manager)
 
 class User(namedtuple('User', 'id nickname')):
     pass
@@ -49,4 +53,4 @@ def publish_post():
     return 'Hey, you can publish post!'
 
 if __name__ == '__main__':
-    app.run()
+    manager.run()
