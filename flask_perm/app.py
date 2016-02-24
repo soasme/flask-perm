@@ -176,6 +176,20 @@ class Perm(object):
         permissions = PermissionService.get_permissions()
         return [permission.code for permission in permissions]
 
+    def is_user_in_groups(self, user_id, *groups):
+        from .services import UserGroupService, UserGroupMemberService
+        if not groups:
+            return False
+        if '*' in groups:
+            user_group_ids = UserGroupService.get_all_user_group_ids()
+        else:
+            user_groups = UserGroupService.get_user_groups_by_codes(groups)
+            user_group_ids = [user_group.id for user_group in user_groups]
+        if not user_group_ids:
+            return False
+        return UserGroupMemberService.is_user_in_groups(user_id, user_group_ids)
+
+
     def require_group(self, *groups):
         from .services import UserGroupService, UserGroupMemberService
 
@@ -191,19 +205,8 @@ class Perm(object):
                     raise self.Denied
 
                 current_user_id = current_user.id
+                is_allowed = self.is_user_in_groups(current_user_id, *groups)
 
-                if not groups:
-                    is_allowed = True
-                elif '*' in groups:
-                    is_allowed = True
-                else:
-                    user_groups = UserGroupService.get_user_groups_by_codes(groups)
-                    user_group_ids = [user_group.id for user_group in user_groups]
-                    if not user_group_ids:
-                        is_allowed = False
-                    else:
-                        is_allowed = UserGroupMemberService.is_user_in_groups(
-                            current_user_id, user_group_ids)
                 if is_allowed:
                     return func(*args, **kwargs)
                 else:
