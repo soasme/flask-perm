@@ -199,8 +199,15 @@ In Flask-Perm, user gain permissions via both group and directly authorize permi
 Notice
 ------
 
-When shouldn't I use Flask-Perm?
-````````````````````````````````
+Is it save to store superadmin's password?
+``````````````````````````````````````````
+
+Superadmins have great power to control access permission.
+Their password has encrypted in Bcrypt algorithm, which is considered very hard to be
+cracked.
+Use HTTPS to protect your site.
+Don't use simple password for superadmin.
+Keep changing password for superadmin.
 
 How did Flask-Perm implement it?
 ````````````````````````````````
