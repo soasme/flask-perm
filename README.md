@@ -3,7 +3,7 @@ Flask-Perm[WIP]
 
 Flask-Perm is a flask permission management extension.
 
-![Build Status](https://api.travis-ci.org/soasme/Flask-Perm.svg)
+![Build Status](https://travis-ci.org/soasme/flask-perm.svg?branch=master)
 
 For more information please refer to the online docs:
 
