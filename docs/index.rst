@@ -96,13 +96,13 @@ Require Permission
 
 code::
 
-    @perm.require_permissions('post.publish')
+    @perm.require_permission('post.publish')
     def publish_post():
         Post.publish()
 
 code::
 
-    @perm.require_permissions('post.publish', 'post.schedule')
+    @perm.require_permission('post.publish', 'post.schedule')
     def schedule_post_publish():
         Post.schedule_publish()
 
@@ -111,7 +111,7 @@ Require Group
 
 code::
 
-    @perm.require_groups('editor')
+    @perm.require_group('editor')
     def publish_post():
         Post.publish()
 
