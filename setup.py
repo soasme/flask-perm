@@ -7,7 +7,7 @@ from setuptools import setup
 
 setup(
     name='Flask-Perm',
-    version='0.1.10',
+    version='0.2.0',
     url='https://github.com/soasme/flask-perm',
     license='MIT',
     author='Ju Lin',
