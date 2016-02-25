@@ -193,7 +193,7 @@ Flask-Permissions
 
 The basic concept in Flask-Permissions is `role`, `ability`.
 In Flask-Permissions, user has several roles, and each role has several abibities.
-The use case of Flask-Perm is a little bit more complex that Flask-Permissions.
+The use case of Flask-Perm is a little bit more complex than Flask-Permissions.
 In Flask-Perm, user gain permissions via both group and directly authorize permission.
 
 Notice
