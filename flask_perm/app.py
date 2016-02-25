@@ -19,10 +19,18 @@ class Perm(object):
         self.current_user_callback = None
         self.users_callback = None
         self.users_count_callback = None
-        self.admin_logger = logging.getLogger('flask_perm.admin')
+        self._admin_logger = logging.getLogger('flask_perm.admin')
         self.registered_permissions = set()
         if app is not None:
             self.init_app(app)
+
+    @property
+    def admin_logger(self):
+        return self._admin_logger
+
+    @admin_logger.setter
+    def admin_logger(self, logger):
+        self._admin_logger = logger
 
     def init_app(self, app):
         """Initialize Perm object.
