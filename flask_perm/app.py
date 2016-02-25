@@ -92,7 +92,7 @@ class Perm(object):
     def get_perm_admin_id_from_session(self):
         from .services import SuperAdminService
         admin_id = session.get('perm_admin_id')
-        super_admin = SuperAdminService.get(admin_id)
+        super_admin = admin_id and SuperAdminService.get(admin_id)
         return super_admin and super_admin.id
 
     def get_perm_admin_id_by_auth(self, email, password):
