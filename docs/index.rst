@@ -178,9 +178,17 @@ Delete a super admin account::
 Dashboard
 ``````````
 
-Before using dashboard, please create superadmin before.
-There are several builtin Flask-Script commands you can use.
-Visit http://SERVER_NAME:PORT/PERM_ADMIN_URL to manage permissions.
+Before using dashboard, please create superadmin, which is described above.
+Visit http://SERVER_NAME:PORT/PERM_ADMIN_URL, login and manage permissions.
+There are several pages:
+
+* Dashboard Index
+* Users
+* User Groups
+* Permissions
+* User Permissions
+* User Group Permissions
+* User Group Members
 
 Other Library
 --------------
