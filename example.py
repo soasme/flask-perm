@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from collections import namedtuple
-from flask import Flask, g, render_template, abort
+from flask import Flask, g, render_template, render_template_string, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_perm import Perm
 from flask_script import Manager
@@ -48,6 +48,16 @@ def permission_denied(e):
 @perm.require_permission('post.publish')
 def publish_post():
     return 'Hey, you can publish post!'
+
+@app.route('/post/publish/template')
+def template_level_visible():
+    return render_template_string("""
+    {% if require_permission('post.publish') %}
+    Hey, you can publish post!
+    {% else %}
+    No, you can't see this.
+    {% endif %}
+""")
 
 if __name__ == '__main__':
     manager.run()
