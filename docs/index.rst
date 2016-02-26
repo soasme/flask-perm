@@ -8,8 +8,10 @@ Flask-Perm
 
 .. module:: flask.ext.perm
 
-`Flask-Perm` is a Flask extension that provide permission system for your application.
-It registers a Web dashboard, api to your application.
+`Flask-Perm` is a Flask extension that can protect your view or function to be
+accessed by person who owns proper permission. There is a default dashboard
+to add/create/authorize/revoke permission to a person or a group, which is
+convenient for you to bootstrap your permission management..
 
 Installation
 ------------
