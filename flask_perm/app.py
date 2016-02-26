@@ -57,6 +57,8 @@ class Perm(object):
         from .admin import bp as admin_bp
         app.register_blueprint(admin_bp, url_prefix=app.config.get('PERM_ADMIN_PREFIX'))
 
+        self.register_context_processors(app)
+
 
 
     def log_admin_action(self, msg):
@@ -249,7 +251,6 @@ class Perm(object):
             return False
         return UserGroupMemberService.is_user_in_groups(user_id, user_group_ids)
 
-
     def require_group(self, *groups):
         """A decorator that can decide whether current user is in listed groups.
 
@@ -305,6 +306,26 @@ class Perm(object):
             return _
         return deco
 
+    def require_permission_in_template(self, *codes):
+        """Require permission in template."""
+        if self.current_user_callback is None:
+            raise NotImplementedError('You must register current_user_loader!')
+
+        for code in codes:
+            self.registered_permissions.add(code)
+
+        current_user = self.current_user_callback()
+
+        if not current_user:
+            return False
+
+        return self.has_permissions(current_user.id, *codes)
+
+    def default_context_processors(self):
+        return {
+            'require_permission': self.require_permission_in_template,
+        }
+
     def register_commands(self, flask_script_manager):
         """Register several convinient Flask-Script commands.
 
@@ -314,3 +335,8 @@ class Perm(object):
         """
         from .script import perm_manager
         flask_script_manager.add_command('perm', perm_manager)
+
+    def register_context_processors(self, app):
+        """Register default context processors to app.
+        """
+        app.context_processor(self.default_context_processors)
