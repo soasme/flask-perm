@@ -196,10 +196,14 @@ class Perm(object):
         """Decide whether a user has a permission identified by `codes`.
 
         Code is defined in perm admin dashboard."""
+
         from .services import VerificationService, PermissionService
+
         permission = PermissionService.get_by_code(code)
+
         if not permission:
             return False
+
         return VerificationService.has_permission(user_id, permission.id)
 
     def has_permissions(self, user_id, *codes):
@@ -208,6 +212,7 @@ class Perm(object):
         Codes are defined in perm admin dashboard."""
         if not codes:
             return True
+
         if '*' in codes:
             return any(
                 self.has_permission(user_id, code)
@@ -221,18 +226,24 @@ class Perm(object):
 
         Codes are defined in perm admin dashboard."""
         from .services import VerificationService, PermissionService
+
         permission_ids = VerificationService.get_user_permissions(user_id)
+
         permissions = map(PermissionService.get, permission_ids)
         permissions = filter(None, permissions)
         permissions = map(PermissionService.rest, permissions)
+
         return permissions
 
     def get_all_permission_codes(self):
         """Get all permission codes.
 
         WARNING: this might have performance issue."""
+
         from .services import PermissionService
+
         permissions = PermissionService.get_permissions()
+
         return [permission.code for permission in permissions]
 
     def is_user_in_groups(self, user_id, *groups):
@@ -240,15 +251,19 @@ class Perm(object):
 
         Groups are defined in perm admin dashboard."""
         from .services import UserGroupService, UserGroupMemberService
+
         if not groups:
             return False
+
         if '*' in groups:
             user_group_ids = UserGroupService.get_all_user_group_ids()
         else:
             user_groups = UserGroupService.get_user_groups_by_codes(groups)
             user_group_ids = [user_group.id for user_group in user_groups]
+
         if not user_group_ids:
             return False
+
         return UserGroupMemberService.is_user_in_groups(user_id, user_group_ids)
 
     def require_group(self, *groups):
@@ -261,10 +276,8 @@ class Perm(object):
         def deco(func):
             @wraps(func)
             def _(*args, **kwargs):
-                if self.current_user_callback is None:
-                    raise NotImplementedError('You must register current_user_loader!')
 
-                current_user = self.current_user_callback()
+                current_user = self.load_current_user()
 
                 if not current_user:
                     raise self.Denied
@@ -283,10 +296,7 @@ class Perm(object):
         """Require group in template"""
         from .services import UserGroupService, UserGroupMemberService
 
-        if self.current_user_callback is None:
-            raise NotImplementedError('You must register current_user_loader!')
-
-        current_user = self.current_user_callback()
+        current_user = self.load_current_user()
 
         if not current_user:
             return False
@@ -306,10 +316,8 @@ class Perm(object):
         def deco(func):
             @wraps(func)
             def _(*args, **kwargs):
-                if self.current_user_callback is None:
-                    raise NotImplementedError('You must register current_user_loader!')
+                current_user = self.load_current_user()
 
-                current_user = self.current_user_callback()
                 if not current_user:
                     raise self.Denied
 
@@ -325,13 +333,10 @@ class Perm(object):
 
     def require_permission_in_template(self, *codes):
         """Require permission in template."""
-        if self.current_user_callback is None:
-            raise NotImplementedError('You must register current_user_loader!')
-
         for code in codes:
             self.registered_permissions.add(code)
 
-        current_user = self.current_user_callback()
+        current_user = self.load_current_user()
 
         if not current_user:
             return False
