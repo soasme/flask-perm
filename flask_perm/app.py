@@ -278,6 +278,22 @@ class Perm(object):
             return _
         return deco
 
+    def require_group_in_template(self, *groups):
+        """Require group in template"""
+        from .services import UserGroupService, UserGroupMemberService
+
+        if self.current_user_callback is None:
+            raise NotImplementedError('You must register current_user_loader!')
+
+        current_user = self.current_user_callback()
+
+        if not current_user:
+            return False
+
+        current_user_id = current_user.id
+        return self.is_user_in_groups(current_user_id, *groups)
+
+
     def require_permission(self, *codes):
         """A decorator that can decide whether current user has listed permission codes.
 
@@ -324,6 +340,7 @@ class Perm(object):
     def default_context_processors(self):
         return {
             'require_permission': self.require_permission_in_template,
+            'require_group': self.require_group_in_template,
         }
 
     def register_commands(self, flask_script_manager):
