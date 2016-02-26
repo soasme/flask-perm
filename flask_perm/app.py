@@ -257,12 +257,13 @@ class Perm(object):
         Groups are defined in perm admin dashboard."""
         from .services import UserGroupService, UserGroupMemberService
 
-        if self.current_user_callback is None:
-            raise NotImplementedError('You must register current_user_loader!')
 
         def deco(func):
             @wraps(func)
             def _(*args, **kwargs):
+                if self.current_user_callback is None:
+                    raise NotImplementedError('You must register current_user_loader!')
+
                 current_user = self.current_user_callback()
 
                 if not current_user:
@@ -298,8 +299,6 @@ class Perm(object):
         """A decorator that can decide whether current user has listed permission codes.
 
         Codes are defined in perm admin dashboard."""
-        if self.current_user_callback is None:
-            raise NotImplementedError('You must register current_user_loader!')
 
         for code in codes:
             self.registered_permissions.add(code)
@@ -307,6 +306,8 @@ class Perm(object):
         def deco(func):
             @wraps(func)
             def _(*args, **kwargs):
+                if self.current_user_callback is None:
+                    raise NotImplementedError('You must register current_user_loader!')
 
                 current_user = self.current_user_callback()
                 if not current_user:
