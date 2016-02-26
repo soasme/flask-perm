@@ -108,6 +108,14 @@ code::
     def schedule_post_publish():
         Post.schedule_publish()
 
+In template, you can protect a block by writing code::
+
+    {% if require_permission('post.publish') %}
+    <a class="btn btn-primary" href="{{ url_for('publish_post') }}">
+      Publish Post
+    </a>
+    {% endif %}
+
 Require Group
 `````````````
 
@@ -116,6 +124,14 @@ code::
     @perm.require_group('editor')
     def publish_post():
         Post.publish()
+
+In template, you can protect a block by writing code::
+
+    {% if require_group('editor') %}
+    <a class="btn btn-primary" href="{{ url_for('publish_post') }}">
+      Publish Post
+    </a>
+    {% endif %}
 
 Low Level API
 `````````````
