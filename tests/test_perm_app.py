@@ -41,6 +41,7 @@ def test_require_group_passed(perm):
     )
     member = UserGroupMemberService.create(user_id=1, user_group_id=user_group.id)
     assert perm.require_group('test.require_group_passed')(lambda: True)()
+    assert perm.require_group_in_template('test.require_group_passed')
     assert perm.require_group('*')(lambda: True)()
 
 def test_require_group_failed(perm):
@@ -52,5 +53,6 @@ def test_require_group_failed(perm):
     member = UserGroupMemberService.create(user_id=2, user_group_id=user_group.id)
     with raises(perm.Denied):
         assert perm.require_group('test.require_group_passed')(lambda: True)()
+    assert not perm.require_group_in_template('test.require_group_passed')
     with raises(perm.Denied):
         assert perm.require_group('*')(lambda: True)()
