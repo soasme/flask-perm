@@ -60,4 +60,16 @@ def template_level_visible():
 """)
 
 if __name__ == '__main__':
+    """
+    To create superadmin, run
+
+        $ python example.py perm create_superadmin your_admin_account
+        Please input password:
+        Please input password again:
+        Success!
+
+    To run server, run
+
+        $ python example.py runserver
+    """
     manager.run()
