@@ -217,7 +217,7 @@ In Flask-Perm, user gain permissions via both group and directly authorize permi
 Notice
 ------
 
-Is it save to store superadmin's password?
+Is it safe to store superadmin's password?
 ``````````````````````````````````````````
 
 Superadmins have great power to control access permission.
