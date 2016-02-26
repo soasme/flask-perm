@@ -19,6 +19,7 @@ def test_get_require_permission_passed(perm):
 
     g.user = {'id': 1, 'is_allowed': False}
     assert perm.require_permission('test.get_require_permission.passed')(lambda: True)()
+    assert perm.require_permission_in_template('test.get_require_permission.passed')
 
 def test_get_permissions(perm):
     from flask_perm.services import PermissionService, UserPermissionService
