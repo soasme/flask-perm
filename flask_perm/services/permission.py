@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from sqlalchemy import func
 
 from ..core import db
 from ..models import Permission
@@ -52,6 +53,13 @@ def filter_permissions(filter_by, offset, limit, sort_field='created_at', sort_d
     field = getattr(Permission, sort_field)
     order_by = getattr(field, sort_dir.lower())()
     return query.order_by(order_by).offset(offset).limit(limit).all()
+
+def count_filter_permission(filter_by, offset, limit, sort_field='created_at', sort_dir='desc'):
+    query = Permission.query
+    if filter_by:
+        query = query.filter_by(**filter_by)
+    return query.value(func.count(Permission.id))
+
 
 def get_permissions_by_ids(ids):
     return Permission.query.filter(Permission.id.in_(ids)).all()

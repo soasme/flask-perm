@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from ..core import db
 from ..models import UserGroupMember
@@ -58,6 +58,12 @@ def filter_user_group_members(filter_by, offset, limit, sort_field='created_at',
     field = getattr(UserGroupMember, sort_field)
     order_by = getattr(field, sort_dir.lower())()
     return query.order_by(order_by).offset(offset).limit(limit).all()
+
+def count_filter_user_group_members(filter_by, offset, limit):
+    query = UserGroupMember.query
+    if filter_by:
+        query = query.filter_by(**filter_by)
+    return query.value(func.count(UserGroupMember.id))
 
 def rest(obj):
     return dict(
