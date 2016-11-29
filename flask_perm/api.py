@@ -275,8 +275,8 @@ def get_user_group_members():
         filter_by, offset, limit, sort_field, sort_dir)
     count = UserGroupMemberService.count_filter_user_group_members(filter_by, offset, limit)
 
-    members = map(UserGroupMemberService.rest, members, count)
-    return ok(members)
+    members = map(UserGroupMemberService.rest, members)
+    return ok(members, count)
 
 @bp.route('/user_group_members', methods=['POST'])
 def add_user_group_member():
