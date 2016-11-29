@@ -13,8 +13,12 @@ from .services import (
 
 bp = Blueprint('flask_perm_api', __name__)
 
-def ok(data=None):
-    return jsonify(code=0, message='success', data=data)
+def ok(data=None, count=1):
+    response = jsonify(code=0, message='success', data=data)
+    if count:
+        response.headers['X-Total-Count'] = count
+        return response
+    return response
 
 def bad_request(message='bad request', **data):
     return jsonify(code=1, message=message, data=data), 400
@@ -76,10 +80,13 @@ def get_permissions():
     sort_field = request.args.get('_sortField', 'created_at').lower()
     sort_dir = request.args.get('_sortDir', 'DESC').lower()
     filter_by = _get_filter_by()
+
     permissions = PermissionService.filter_permissions(
         filter_by, offset, limit, sort_field, sort_dir)
+    count = PermissionService.count_filter_permission(filter_by, offset, limit)
+
     permissions = map(PermissionService.rest, permissions)
-    return ok(permissions)
+    return ok(permissions, count)
 
 @bp.route('/permissions/<int:permission_id>')
 def get_permission(permission_id):
@@ -120,10 +127,13 @@ def get_user_permissions():
     sort_field = request.args.get('_sortField', 'created_at').lower()
     sort_dir = request.args.get('_sortDir', 'DESC').lower()
     filter_by = _get_filter_by()
+
     user_permissions = UserPermissionService.filter_user_permissions(
         filter_by, offset, limit, sort_field, sort_dir)
+    count = UserPermissionService.count_filter_user_permission(filter_by, offset, limit)
+
     user_permissions = map(UserPermissionService.rest, user_permissions)
-    return ok(user_permissions)
+    return ok(user_permissions, count)
 
 @bp.route('/user_permissions', methods=['POST'])
 def add_user_permission():
@@ -158,10 +168,14 @@ def get_user_group_permissions():
     sort_field = request.args.get('_sortField', 'created_at').lower()
     sort_dir = request.args.get('_sortDir', 'DESC').lower()
     filter_by = _get_filter_by()
+
     user_group_permissions = UserGroupPermissionService.filter_user_group_permissions(
         filter_by, offset, limit, sort_field, sort_dir)
+    count = UserGroupPermissionService.count_filter_user_group_permissions(
+        filter_by, offset, limit)
+
     user_group_permissions = map(UserGroupPermissionService.rest, user_group_permissions)
-    return ok(user_group_permissions)
+    return ok(user_group_permissions, count)
 
 @bp.route('/user_group_permissions', methods=['POST'])
 def add_user_group_permission():
@@ -209,10 +223,13 @@ def get_user_groups():
     sort_field = request.args.get('_sortField', 'created_at').lower()
     sort_dir = request.args.get('_sortDir', 'DESC').lower()
     filter_by = _get_filter_by()
+
     user_groups = UserGroupService.filter_user_groups(
         filter_by, offset, limit, sort_field, sort_dir)
+    count = UserGroupService.count_filter_user_group(filter_by, offset, limit)
+
     user_groups = map(UserGroupService.rest, user_groups)
-    return ok(user_groups)
+    return ok(user_groups, count)
 
 @bp.route('/user_groups/<int:user_group_id>')
 def get_user_group(user_group_id):
@@ -253,9 +270,13 @@ def get_user_group_members():
     sort_field = request.args.get('_sortField', 'created_at').lower()
     sort_dir = request.args.get('_sortDir', 'DESC').lower()
     filter_by = _get_filter_by()
-    members = UserGroupMemberService.filter_user_group_members(filter_by, offset, limit, sort_field, sort_dir)
+
+    members = UserGroupMemberService.filter_user_group_members(
+        filter_by, offset, limit, sort_field, sort_dir)
+    count = UserGroupMemberService.count_filter_user_group_members(filter_by, offset, limit)
+
     members = map(UserGroupMemberService.rest, members)
-    return ok(members)
+    return ok(members, count)
 
 @bp.route('/user_group_members', methods=['POST'])
 def add_user_group_member():

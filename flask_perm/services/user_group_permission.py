@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 
 from ..core import db
@@ -69,6 +69,12 @@ def filter_user_group_permissions(filter_by, offset, limit, sort_field='created_
     field = getattr(UserGroupPermission, sort_field)
     order_by = getattr(field, sort_dir.lower())()
     return query.order_by(order_by).offset(offset).limit(limit).all()
+
+def count_filter_user_group_permissions(filter_by, offset, limit):
+    query = UserGroupPermission.query
+    if filter_by:
+        query = query.filter_by(**filter_by)
+    return query.value(func.count(UserGroupPermission.id))
 
 def rest(user_permission):
     return dict(

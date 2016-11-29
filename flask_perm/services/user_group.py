@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from sqlalchemy import func
 
 from ..core import db
 from ..models import UserGroup
@@ -61,6 +62,12 @@ def filter_user_groups(filter_by, offset, limit, sort_field='created_at', sort_d
     field = getattr(UserGroup, sort_field)
     order_by = getattr(field, sort_dir.lower())()
     return query.order_by(order_by).offset(offset).limit(limit).all()
+
+def count_filter_user_group(filter_by, offset, limit):
+    query = UserGroup.query
+    if filter_by:
+        query = query.filter_by(**filter_by)
+    return query.value(func.count(UserGroup.id))
 
 def get_all_user_group_ids():
     return [group.id for group in UserGroup.query.all()]
