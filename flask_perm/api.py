@@ -13,7 +13,7 @@ from .services import (
 
 bp = Blueprint('flask_perm_api', __name__)
 
-def ok(data=None, count=0):
+def ok(data=None, count=1):
     response = jsonify(code=0, message='success', data=data)
     if count:
         response.headers['X-Total-Count'] = count
