@@ -13,8 +13,12 @@ from .services import (
 
 bp = Blueprint('flask_perm_api', __name__)
 
-def ok(data=None):
-    return jsonify(code=0, message='success', data=data)
+def ok(data=None, count=0):
+    response = jsonify(code=0, message='success', data=data)
+    if count:
+        response.headers['X-Total-Count'] = count
+        return response
+    return response
 
 def bad_request(message='bad request', **data):
     return jsonify(code=1, message=message, data=data), 400
