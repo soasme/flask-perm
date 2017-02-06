@@ -10,6 +10,7 @@ PermAdmin.config(['NgAdminConfigurationProvider', function (nga) {
   ).baseApiUrl(window.g.baseApiUrl);
   // more configuration here later
   var permission = nga.entity('permissions');
+  var all_permission = nga.entity('permissions?limit=1000');
   var user = nga.entity('users').readOnly();
   var userGroup = nga.entity('user_groups');
   var userPermission = nga.entity('user_permissions');
@@ -29,6 +30,10 @@ PermAdmin.config(['NgAdminConfigurationProvider', function (nga) {
       .label('User Group'),
     permission: nga.field('permission_id', 'reference')
       .targetEntity(permission)
+      .targetField(nga.field('title'))
+      .label('Permission'),
+    all_permission: nga.field('permission_id', 'reference')
+      .targetEntity(all_permission)
       .targetField(nga.field('title'))
       .label('Permission')
   };
@@ -81,7 +86,7 @@ PermAdmin.config(['NgAdminConfigurationProvider', function (nga) {
 
   userPermission.creationView().fields([
     fields.user,
-    fields.permission,
+    fields.all_permission,
   ]);
   userPermission.showView().disable();
 
@@ -96,7 +101,7 @@ PermAdmin.config(['NgAdminConfigurationProvider', function (nga) {
 
   userGroupPermission.creationView().fields([
     fields.userGroup,
-    fields.permission,
+    fields.all_permission,
   ]);
 
   userGroupPermission.showView().disable();
@@ -157,8 +162,12 @@ PermAdmin.config(['NgAdminConfigurationProvider', function (nga) {
 PermAdmin.config(['RestangularProvider', function(RestangularProvider) {
   RestangularProvider.addFullRequestInterceptor(
     function(element, operation, what, url, headers, params) {
+      String.prototype.endWith=function(endStr){
+        var d=this.length-endStr.length;
+        return (d>=0&&this.lastIndexOf(endStr)==d)
+      }
       if (operation === "getList") {
-        if (params._page) {
+        if (params._page && !url.endWith("?limit=1000")) {
           params.offset = (params._page - 1) * params._perPage;
           params.limit = params._perPage;
         }
