@@ -27,5 +27,5 @@ Sphinx-PyPI-upload==0.2.1
 sphinx-rtd-theme==0.1.9
 SQLAlchemy==1.0.10
 twine==1.6.5
-Werkzeug==0.11.2
+Werkzeug==0.15.3
 wheel==0.24.0
