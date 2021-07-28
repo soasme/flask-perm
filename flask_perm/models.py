@@ -81,7 +81,7 @@ class UserGroupPermission(db.Model):
 
     __tablename__ = 'perm_user_group_permission'
     __table_args__ = (
-        db.UniqueConstraint('user_group_id', 'permission_id', name='ux_user_permission'),
+        db.UniqueConstraint('user_group_id', 'permission_id', name='ux_user_group_permission'),
     )
 
     id = db.Column(db.Integer, primary_key=True)
